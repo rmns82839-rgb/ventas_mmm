@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Caja y Ventas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos generales */
+        body { background-color: #1f2937; color: #f3f4f6; font-family: sans-serif; }
+        .container { max-width: 1200px; margin: auto; padding: 20px; }
+        .card { background-color: #374151; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        input[type="text"], input[type="number"], select { background-color: #4b5563; color: #f3f4f6; border: 1px solid #6b7280; padding: 8px; border-radius: 4px; width: 100%; }
+        .modal { display: none; background-color: rgba(0, 0, 0, 0.7); position: fixed; top: 0; left: 0; width: 100%; height: 100%; justify-content: center; align-items: center; z-index: 100; }
+        
+        /* Estilos de Estado y Tipo de Transacción */
+        .status-fiado { background-color: #fee2e2; color: #991b1b; }
+        .status-pagado { background-color: #d1fae5; color: #065f46; }
+        .tipo-retiro { background-color: #fef3c7; color: #92400e; }
+        .status-pill { padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        
+        /* Estilos para Imprimir */
+        @media print {
+            body > :not(.print-area) { display: none; }
+            .print-area { display: block; width: 100%; margin: 0; padding: 0; color: #000; background-color: #fff; }
+            .print-area .card { background-color: #fff; box-shadow: none; border: 1px solid #ccc; }
+            .print-area table { border: 1px solid #000; }
+            .print-area th, .print-area td { border: 1px solid #000; color: #000; }
+            .print-area th { background-color: #eee; }
+            .print-area h1, .print-area h2 { color: #000; }
+            .status-pill { background-color: transparent !important; color: #000 !important; border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const API_BASE_URL = 'https://nombre-de-tu-backend.onrender.com/api/transacciones'; // <--- ¡CAMBIA ESTO!
+    </script>
+    
+    <div id="home-screen" class="fixed inset-0 bg-gray-900 flex flex-col justify-center items-center z-50">
+        <div class="text-center p-8 bg-gray-800 rounded-lg shadow-2xl">
+            <h1 class="text-4xl font-extrabold text-indigo-400 mb-4">Control de Caja y Ventas MMM</h1>
+            <p class="text-gray-300 mb-8">Gestión de Transacciones y Reportes</p>
+            <button id="ingresar-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
+                Ingresar al Sistema
+            </button>
+        </div>
+    </div>
+
+    <div id="main-content" class="container hidden">
+        <header class="bg-indigo-600 p-4 rounded-t-lg mb-6 flex justify-between items-center">
+            <h1 class="text-3xl font-bold">Registro de Transacciones</h1>
+            <div class="flex items-center space-x-4">
+                <button id="retiro-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md transition duration-150">
+                    Registrar Retiro
+                </button>
+                <button id="print-report-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-md transition duration-150">
+                    Imprimir Reporte 🖨️
+                </button>
+                <div id="connection-status" class="px-3 py-1 text-sm font-medium rounded-full bg-yellow-400 text-gray-900">
+                    Cargando...
+                </div>
+            </div>
+        </header>
+
+        <section class="card mb-6">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2">Registrar Nueva Venta/Ingreso</h2>
+            <form id="venta-form" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                
+                <div>
+                    <label for="grupo" class="block text-sm font-medium mb-1">Número de Grupo</label>
+                    <input type="text" id="grupo" required placeholder="Ej: 1, 2, Central">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="integrantes" class="block text-sm font-medium mb-1">Nombres de Integrantes</label>
+                    <input type="text" id="integrantes" required placeholder="Ej: Juan y Pedro">
+                </div>
+                
+                <div>
+                    <label for="valor" class="block text-sm font-medium mb-1">Valor Total ($)</label>
+                    <input type="number" id="valor" required min="100" placeholder="Ej: 50000">
+                </div>
+                
+                <div>
+                    <label for="estado" class="block text-sm font-medium mb-1">Fiado / Pagado</label>
+                    <select id="estado" required>
+                        <option value="Pagado">Pagado</option>
+                        <option value="Fiado">Fiado</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-4">
+                    <label for="descripcion" class="block text-sm font-medium mb-1">Descripción del Ítem / Detalle</label>
+                    <input type="text" id="descripcion" placeholder="Ej: 2 Libros 'Caminos', Donación (Requerido)">
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-md">
+                        Registrar Venta
+                    </button>
+                </div>
+            </form>
+        </section>
+        
+        <section class="mb-6">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2">Resumen de Caja y Deuda</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="card bg-blue-700">
+                    <h3 class="text-sm font-medium">Total Ventas/Ingresos</h3>
+                    <p id="total-ventas" class="text-2xl font-bold mt-1">$0.00</p>
+                </div>
+                <div class="card bg-green-700">
+                    <h3 class="text-sm font-medium">Total Fiados Pendientes</h3>
+                    <p id="total-fiado" class="text-2xl font-bold mt-1">$0.00</p>
+                </div>
+                <div class="card bg-red-700">
+                    <h3 class="text-sm font-medium">Total Retiros de Caja</h3>
+                    <p id="total-retiros" class="text-2xl font-bold mt-1">$0.00</p>
+                </div>
+                <div class="card bg-indigo-700">
+                    <h3 class="text-sm font-medium">SALDO NETO (CAJA)</h3>
+                    <p id="saldo-neto" class="text-2xl font-bold mt-1">$0.00</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card mb-6">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2">Historial de Transacciones</h2>
+            
+            <div class="table-container overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-600">
+                    <thead>
+                        <tr>
+                            <th class="px-3 py-3 text-sm font-medium">Fecha</th>
+                            <th class="px-3 py-3 text-sm font-medium">Tipo</th>
+                            <th class="px-3 py-3 text-sm font-medium">Concepto/Descripción</th>
+                            <th class="px-3 py-3 text-sm font-medium">Grupo/Integrantes</th>
+                            <th class="px-3 py-3 text-sm font-medium">Valor</th>
+                            <th class="px-3 py-3 text-sm font-medium">Estado</th>
+                            <th class="px-3 py-3 text-sm font-medium">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transacciones-list" class="divide-y divide-gray-600">
+                        <tr><td colspan="7" class="p-4 text-center">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div id="retiro-modal" class="modal">
+        <div class="modal-content card">
+            <h3 class="text-lg font-bold mb-4">Registrar Retiro de Caja</h3>
+            <form id="retiro-form">
+                
+                <label for="retiro-concepto" class="block text-sm font-medium mb-1">Concepto del Retiro</label>
+                <input type="text" id="retiro-concepto" placeholder="Ej: Pago de Luz, Compra de Ítems" required class="mb-4">
+
+                <label for="retiro-valor" class="block text-sm font-medium mb-1">Valor a Retirar ($)</label>
+                <input type="number" id="retiro-valor" min="100" placeholder="Monto" required class="mb-6">
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="close-retiro-modal" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 rounded-md">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md">Confirmar Retiro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="abono-modal" class="modal">
+        <div class="modal-content card">
+            <h3 class="text-lg font-bold mb-4">Marcar Venta como Pagada</h3>
+            <p class="mb-2">Cliente: <span id="modal-cliente-nombre" class="font-semibold"></span></p>
+            <p class="mb-4">Deuda Original: <span id="modal-deuda-actual" class="font-semibold text-red-400"></span></p>
+            
+            <p class="text-sm mb-4 bg-yellow-800 p-2 rounded-md">
+                Al confirmar, esta transacción se marcará como **Pagada** y el valor total se sumará al Saldo Neto.
+            </p>
+            
+            <div class="flex justify-end space-x-3">
+                <button id="close-abono-modal" type="button" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 rounded-md">Cancelar</button>
+                <button id="abonar-btn" type="button" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-md">Marcar como Pagado</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="app-message" class="fixed top-4 right-4 p-4 rounded-lg shadow-xl hidden text-sm font-semibold transition-opacity duration-300 z-50"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const homeScreen = document.getElementById('home-screen');
+            const mainContent = document.getElementById('main-content');
+            const ingresarBtn = document.getElementById('ingresar-btn');
+
+            const transaccionesList = document.getElementById('transacciones-list');
+            const ventaForm = document.getElementById('venta-form');
+            const connectionStatus = document.getElementById('connection-status');
+            const appMessageEl = document.getElementById('app-message');
+
+            const totalVentasEl = document.getElementById('total-ventas');
+            const totalFiadoEl = document.getElementById('total-fiado');
+            const totalRetirosEl = document.getElementById('total-retiros');
+            const saldoNetoEl = document.getElementById('saldo-neto');
+            
+            // Retiro Modal elements
+            const retiroBtn = document.getElementById('retiro-btn');
+            const retiroModal = document.getElementById('retiro-modal');
+            const closeRetiroModalBtn = document.getElementById('close-retiro-modal');
+            const retiroForm = document.getElementById('retiro-form');
+            
+            // Abono Modal elements
+            const abonoModal = document.getElementById('abono-modal');
+            const closeAbonoModalBtn = document.getElementById('close-abono-modal');
+            const abonarBtn = document.getElementById('abonar-btn');
+            const modalClienteNombre = document.getElementById('modal-cliente-nombre');
+            const modalDeudaActual = document.getElementById('modal-deuda-actual');
+            
+            const printReportBtn = document.getElementById('print-report-btn');
+            
+            let currentTransaccionId = null; 
+
+            // --- 0. FUNCIÓN DE UTILIDAD y NAVEGACIÓN ---
+            const formatCurrency = (amount) => {
+                // Usa Math.abs para asegurar que el signo no afecte el formato de moneda.
+                return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Math.abs(amount));
+            };
+
+            function showMessage(message, isError = false) {
+                appMessageEl.textContent = message;
+                appMessageEl.classList.remove('hidden', 'bg-red-500', 'bg-green-500', 'text-white');
+                
+                if (isError) {
+                    appMessageEl.classList.add('bg-red-500', 'text-white');
+                } else {
+                    appMessageEl.classList.add('bg-green-500', 'text-white');
+                }
+
+                setTimeout(() => {
+                    appMessageEl.classList.add('hidden');
+                }, 4000);
+            }
+            
+            ingresarBtn.addEventListener('click', () => {
+                homeScreen.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                fetchTransacciones();
+            });
+
+            // --- 1. LECTURA (READ) ---
+            async function fetchTransacciones() {
+                try {
+                    const response = await fetch(API_BASE_URL);
+                    if (!response.ok) {
+                        throw new Error(`Error ${response.status} al cargar datos. Verifica la URL y el servidor.`);
+                    }
+                    const transacciones = await response.json();
+                    renderTransacciones(transacciones);
+                    calculateTotals(transacciones);
+                    connectionStatus.textContent = "CONEXIÓN ACTIVA";
+                    connectionStatus.classList.remove('bg-yellow-400', 'bg-red-500');
+                    connectionStatus.classList.add('bg-green-500');
+                } catch (error) {
+                    console.error("Error en la conexión o carga de datos:", error);
+                    transaccionesList.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-400 font-semibold">
+                        ❌ Error de red: ${error.message}. Verifica tu Backend en Render.
+                    </td></tr>`;
+                    connectionStatus.textContent = "CONEXIÓN FALLIDA";
+                    connectionStatus.classList.remove('bg-green-500');
+                    connectionStatus.classList.add('bg-red-500');
+                    
+                    // Resetear totales en caso de falla
+                    totalVentasEl.textContent = '$0.00';
+                    totalFiadoEl.textContent = '$0.00';
+                    totalRetirosEl.textContent = '$0.00';
+                    saldoNetoEl.textContent = '$0.00';
+                }
+            }
+
+            // --- 2. RENDERING DE LA TABLA ---
+            function renderTransacciones(transacciones) {
+                if (transacciones.length === 0) {
+                    transaccionesList.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400">No hay transacciones registradas.</td></tr>`;
+                    return;
+                }
+
+                transaccionesList.innerHTML = transacciones.map(t => {
+                    let typePill = '';
+                    let actionButton = '';
+                    let valorDisplay = formatCurrency(t.valor);
+                    let estadoDisplay = '';
+                    let estadoClass = '';
+                    
+                    if (t.tipo === 'RETIRO') {
+                        typePill = `<span class="status-pill tipo-retiro">RETIRO</span>`;
+                        estadoDisplay = 'N/A';
+                        valorDisplay = `(${valorDisplay})`;
+                        actionButton = `<button data-id="${t._id}" data-action="delete" class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs">Eliminar</button>`;
+                    } else if (t.tipo === 'VENTA') {
+                        typePill = `<span class="status-pill status-${t.estado.toLowerCase()}">${t.estado.toUpperCase()}</span>`;
+                        estadoDisplay = t.estado;
+                        
+                        if (t.estado === 'Fiado') {
+                            actionButton = `<button data-id="${t._id}" data-cliente="${t.cliente || 'Anónimo'}" data-valor="${t.valor}" data-action="pay" class="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-xs">Pagar</button>`;
+                        }
+                        
+                        actionButton += `<button data-id="${t._id}" data-action="delete" class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs ml-1">Eliminar</button>`;
+                    }
+
+                    const createdAt = new Date(t.createdAt).toLocaleDateString('es-CO');
+
+                    return `
+                        <tr class="hover:bg-gray-700">
+                            <td class="px-3 py-2 text-sm text-gray-300">${createdAt}</td>
+                            <td class="px-3 py-2 text-sm font-medium">${typePill}</td>
+                            <td class="px-3 py-2 text-sm">${t.descripcion}</td>
+                            <td class="px-3 py-2 text-sm text-gray-400">${t.grupo} / ${t.integrantes}</td>
+                            <td class="px-3 py-2 text-sm font-bold">${valorDisplay}</td>
+                            <td class="px-3 py-2 whitespace-nowrap">${estadoDisplay ? `<span class="status-pill status-${estadoDisplay.toLowerCase()}">${estadoDisplay}</span>` : 'N/A'}</td>
+                            <td class="px-3 py-2 whitespace-nowrap">${actionButton}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // --- 3. CÁLCULOS ---
+            function calculateTotals(transacciones) {
+                const totalVentas = transacciones
+                    .filter(t => t.tipo === 'VENTA')
+                    .reduce((acc, t) => acc + t.valor, 0);
+                    
+                const totalRetiros = transacciones
+                    .filter(t => t.tipo === 'RETIRO')
+                    .reduce((acc, t) => acc + t.valor, 0);
+                    
+                const totalFiado = transacciones
+                    .filter(t => t.tipo === 'VENTA' && t.estado === 'Fiado')
+                    .reduce((acc, t) => acc + t.valor, 0);
+
+                // El Saldo Neto es: (Total Ventas Pagadas) - (Total Retiros)
+                // Total Pagadas = (Total Ventas) - (Total Fiados)
+                const totalPagado = totalVentas - totalFiado;
+                const saldoNeto = totalPagado - totalRetiros; 
+
+                totalVentasEl.textContent = formatCurrency(totalVentas);
+                totalFiadoEl.textContent = formatCurrency(totalFiado);
+                totalRetirosEl.textContent = formatCurrency(totalRetiros);
+                saldoNetoEl.textContent = formatCurrency(saldoNeto); 
+                
+                // Colorear Saldo Neto
+                saldoNetoEl.classList.remove('text-green-400', 'text-red-400');
+                saldoNetoEl.classList.add(saldoNeto >= 0 ? 'text-green-400' : 'text-red-400');
+            }
+
+            // --- 4. REGISTRO DE VENTA (CREATE VENTA) ---
+            ventaForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const nuevaVenta = {
+                    tipo: 'VENTA',
+                    grupo: document.getElementById('grupo').value.trim(),
+                    integrantes: document.getElementById('integrantes').value.trim(),
+                    valor: parseFloat(document.getElementById('valor').value),
+                    estado: document.getElementById('estado').value,
+                    descripcion: document.getElementById('descripcion').value.trim(),
+                    cliente: document.getElementById('integrantes').value.trim(), // Usamos integrantes como cliente para la lógica de abono
+                };
+                
+                if (!nuevaVenta.grupo || !nuevaVenta.integrantes || !nuevaVenta.descripcion || isNaN(nuevaVenta.valor) || nuevaVenta.valor <= 0) {
+                     showMessage('Todos los campos de Venta son obligatorios.', true);
+                     return;
+                }
+
+                try {
+                    const response = await fetch(API_BASE_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(nuevaVenta),
+                    });
+
+                    if (response.ok) {
+                        ventaForm.reset();
+                        document.getElementById('estado').value = 'Pagado'; // Resetear a Pagado por defecto
+                        fetchTransacciones(); 
+                        showMessage('Venta registrada con éxito.');
+                    } else {
+                        const errorData = await response.json();
+                        showMessage('Error al registrar: ' + errorData.message, true);
+                    }
+                } catch (error) {
+                    showMessage('Error de red al conectar con el servidor: ' + error.message, true);
+                }
+            });
+
+            // --- 5. REGISTRO DE RETIRO (CREATE RETIRO) ---
+            retiroBtn.addEventListener('click', () => {
+                retiroModal.style.display = 'flex';
+            });
+            
+            closeRetiroModalBtn.addEventListener('click', () => {
+                retiroModal.style.display = 'none';
+                retiroForm.reset();
+            });
+
+            retiroForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const nuevoRetiro = {
+                    tipo: 'RETIRO',
+                    descripcion: document.getElementById('retiro-concepto').value.trim(),
+                    valor: parseFloat(document.getElementById('retiro-valor').value),
+                    grupo: 'CAJA',
+                    integrantes: 'N/A'
+                };
+                
+                if (!nuevoRetiro.descripcion || isNaN(nuevoRetiro.valor) || nuevoRetiro.valor <= 0) {
+                     showMessage('El concepto y el valor del Retiro son obligatorios y deben ser positivos.', true);
+                     return;
+                }
+                
+                if (!confirm(`¿Confirmas el Retiro de ${formatCurrency(nuevoRetiro.valor)} por concepto de "${nuevoRetiro.descripcion}"?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(API_BASE_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(nuevoRetiro),
+                    });
+
+                    if (response.ok) {
+                        retiroModal.style.display = 'none';
+                        retiroForm.reset();
+                        fetchTransacciones(); 
+                        showMessage('Retiro registrado con éxito.');
+                    } else {
+                        const errorData = await response.json();
+                        showMessage('Error al registrar el retiro: ' + errorData.message, true);
+                    }
+                } catch (error) {
+                    showMessage('Error de red al registrar el retiro: ' + error.message, true);
+                }
+            });
+
+            // --- 6. ABONOS / CAMBIO DE ESTADO (UPDATE) ---
+            abonarBtn.addEventListener('click', async () => {
+                const id = currentTransaccionId;
+                
+                if (!confirm('¿Marcar esta venta como Pagada? El valor total se añadirá al Saldo Neto.')) {
+                    return;
+                }
+                
+                try {
+                     const updatePayload = { estado: 'Pagado' };
+                     
+                     const response = await fetch(`${API_BASE_URL}/${id}`, {
+                         method: 'PUT',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(updatePayload),
+                     });
+                     
+                     if (response.ok) {
+                         abonoModal.style.display = 'none';
+                         fetchTransacciones(); 
+                         showMessage('Transacción marcada como Pagada con éxito.');
+                     } else {
+                         const errorData = await response.json();
+                         showMessage('Error al actualizar el estado: ' + errorData.message, true);
+                     }
+                 } catch (error) {
+                     showMessage('Error de red al actualizar la transacción: ' + error.message, true);
+                 }
+            });
+            
+            closeAbonoModalBtn.addEventListener('click', () => {
+                abonoModal.style.display = 'none';
+            });
+            
+            // --- 7. ELIMINACIÓN (DELETE) ---
+            async function handleDelete(id) {
+                if (!confirm('¿Estás seguro de que quieres eliminar esta transacción? Esta acción es irreversible.')) {
+                    return;
+                }
+                try {
+                    const response = await fetch(`${API_BASE_URL}/${id}`, {
+                        method: 'DELETE',
+                    });
+
+                    if (response.ok) {
+                        fetchTransacciones(); 
+                        showMessage('Transacción eliminada con éxito.');
+                    } else {
+                        showMessage('Error al eliminar la transacción.', true);
+                    }
+                } catch (error) {
+                    showMessage('Error de red al eliminar la transacción: ' + error.message, true);
+                }
+            }
+            
+            // --- 8. REPORTE IMPRIMIBLE ---
+            printReportBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+
+            // --- DELEGACIÓN DE EVENTOS ---
+            transaccionesList.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                const id = button.dataset.id;
+                const action = button.dataset.action;
+
+                if (action === 'delete') {
+                    handleDelete(id);
+                } else if (action === 'pay') {
+                    currentTransaccionId = id;
+                    const cliente = button.dataset.cliente;
+                    const valor = parseFloat(button.dataset.valor);
+                    
+                    modalClienteNombre.textContent = cliente;
+                    modalDeudaActual.textContent = formatCurrency(valor);
+                    abonoModal.style.display = 'flex';
+                }
+            });
+            
+            // Si quieres que el ingreso sea automático sin botón:
+            // fetchTransacciones();
+        });
+    </script>
+</body>
+</html>

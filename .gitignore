@@ -1,0 +1,7 @@
+# Archivo de Entorno Secreto
+# Contiene MONGO_URI (contraseña de la DB). NUNCA debe subirse a Git.
+.env
+
+# Directorio de dependencias de Node.js
+# Se genera localmente y es muy pesado, se descarga automáticamente en Render.
+node_modules/
