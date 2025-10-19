@@ -221,6 +221,71 @@
                 margin-bottom: 15px;
             }
         }
+        
+        /* ================================================= */
+        /* === ESTILOS RESPONSIVOS PARA TABLA DE VENTAS === */
+        /* ================================================= */
+
+        @media screen and (max-width: 600px) {
+            
+            /* Ocultar encabezados de la tabla */
+            #registroVentasContainer table thead {
+                display: none;
+            }
+
+            /* Mostrar filas como bloques */
+            #registroVentasContainer table, 
+            #registroVentasContainer tbody, 
+            #registroVentasContainer tr, 
+            #registroVentasContainer td {
+                display: block;
+                width: 100%;
+            }
+
+            /* Estilo de la fila para parecer una tarjeta */
+            #registroVentasContainer tr {
+                margin-bottom: 10px;
+                border: 1px solid #2ecc71; /* Borde de tarjeta */
+                border-radius: 8px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+                padding: 10px 0; /* Padding vertical para el contenido */
+            }
+            
+            /* Estilo para las celdas (datos) */
+            #registroVentasContainer td {
+                /* Esto asegura que la celda mantenga su padding y el borde inferior */
+                border-bottom: 1px solid #44607a; 
+                padding: 8px 15px;
+                text-align: right;
+                position: relative;
+            }
+
+            /* Insertar etiqueta antes del contenido de la celda usando attr() y pseudo-elemento */
+            #registroVentasContainer td::before {
+                content: attr(data-label);
+                float: left;
+                font-weight: bold;
+                color: #bdc3c7;
+                margin-right: 10px;
+            }
+            
+            /*
+            * INICIO DE MEJORA CRÍTICA: MANTENER FECHA VISIBLE (Columna 5)
+            * -----------------------------------------------------------
+            * Eliminamos la regla display: none; y aplicamos estilos para optimizar el espacio.
+            */
+            #tablaMovimientos td:nth-of-type(5) {
+                font-size: 0.8em; /* Tamaño de fuente más pequeño para ahorrar espacio */
+                color: #7f8c8d; /* Color tenue para que no compita con el valor */
+            }
+            /* FIN DE MEJORA CRÍTICA */
+            
+            /* Ajuste para que el valor se vea bien */
+            #registroVentasContainer td:nth-of-type(3) {
+                text-align: right !important; /* Asegura alineación a la derecha para el valor */
+                font-size: 1.1em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -278,7 +343,7 @@
         </div>
 
         <!-- Secciones de Acción y Botones -->
-        <!-- Cambiado el texto del botón a "Borrar Todo" para que sea más corto -->
+        <!-- Mantenemos el botón "Borrar Todo" compacto -->
         <div class="flex-container three-cols" style="grid-template-columns: 1fr 1fr 1fr;">
             <!-- Botón Exportar -->
             <button id="exportarCsvBtn" onclick="exportarCSV()" class="export-button">Exportar CSV</button> 
@@ -409,7 +474,7 @@
         // =========================================================================
         const ventasPorDefecto = [
             { nombre: 'Actividad', valor: 3000 }, 
-            { nombre: 'Almuerzo Sencillo', valor: 10000 },
+            { nombre: 'Almuerso Sencillo', valor: 10000 },
             { nombre: 'Producto C', valor: 15000 },
             // Puedes añadir más productos aquí:
             // { nombre: 'Producto D', valor: 15.75 }, 
@@ -756,14 +821,21 @@
                 return;
             }
 
-            let html = `<table id="tablaMovimientos" style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead style="background-color: #34495e;"><tr><th style="padding: 10px; text-align: left;">Tipo</th><th style="padding: 10px; text-align: left;">Descripción</th><th style="padding: 10px; text-align: right;">Valor ($)</th><th style="padding: 10px; text-align: center;">Estado</th><th style="padding: 10px; text-align: center;">Fecha</th></tr></thead><tbody>`;
+            let html = `<table id="tablaMovimientos" style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead style="background-color: #34495e;"><tr><th data-label="Tipo" style="padding: 10px; text-align: left;">Tipo</th><th data-label="Descripción" style="padding: 10px; text-align: left;">Descripción</th><th data-label="Valor" style="padding: 10px; text-align: right;">Valor ($)</th><th data-label="Estado" style="padding: 10px; text-align: center;">Estado</th><th data-label="Fecha" style="padding: 10px; text-align: center;">Fecha</th></tr></thead><tbody>`;
 
             movimientos.forEach(m => {
                 const valorDisplay = m.tipo === 'Retiro' ? `-$${m.valor.toFixed(2)}` : `$${m.valor.toFixed(2)}`;
                 const color = m.tipo === 'Retiro' ? '#e74c3c' : m.estado === 'Pagado' ? '#2ecc71' : '#f1c40f';
                 const estadoDisplay = m.tipo === 'Retiro' ? 'COMPLETADO' : m.estado;
                 
-                html += `<tr style="border-bottom: 1px solid #34495e;"><td style="padding: 10px;">${m.tipo}</td><td style="padding: 10px;">${m.descripcion}</td><td style="padding: 10px; text-align: right; color: ${color}; font-weight: bold;">${valorDisplay}</td><td style="padding: 10px; text-align: center;">${estadoDisplay}</td><td style="padding: 10px; text-align: center;">${m.fecha.toLocaleDateString()} ${m.fecha.toLocaleTimeString()}</td></tr>`;
+                // CRÍTICO: Añadir el atributo data-label a cada <td> para el responsive
+                html += `<tr style="border-bottom: 1px solid #34495e;">
+                            <td data-label="Tipo" style="padding: 10px;">${m.tipo}</td>
+                            <td data-label="Descripción" style="padding: 10px;">${m.descripcion}</td>
+                            <td data-label="Valor" style="padding: 10px; text-align: right; color: ${color}; font-weight: bold;">${valorDisplay}</td>
+                            <td data-label="Estado" style="padding: 10px; text-align: center;">${estadoDisplay}</td>
+                            <td data-label="Fecha" style="padding: 10px; text-align: center;">${m.fecha.toLocaleDateString()} ${m.fecha.toLocaleTimeString()}</td>
+                        </tr>`;
             });
 
             html += `</tbody></table>`;
