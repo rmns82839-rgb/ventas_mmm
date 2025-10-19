@@ -76,7 +76,26 @@ app.get('/api/retiros', async (req, res) => {
     }
 });
 
-// 5. RUTA DE PRUEBA
+// 5. RUTA PARA BORRAR TODOS LOS DATOS (DELETE) <--- ESTE ES EL ENDPOINT NUEVO
+app.delete('/api/datos-completos', async (req, res) => {
+    try {
+        const ventasResult = await Venta.deleteMany({});
+        const retirosResult = await Retiro.deleteMany({});
+        
+        res.status(200).json({ 
+            message: 'Todos los datos de Ventas y Retiros han sido borrados con éxito.',
+            ventasBorradas: ventasResult.deletedCount, 
+            retirosBorrados: retirosResult.deletedCount 
+        });
+
+    } catch (error) {
+        console.error('Error al borrar los datos completos:', error);
+        res.status(500).json({ message: 'Error interno del servidor al intentar borrar los datos.', error: error.message });
+    }
+});
+
+
+// 6. RUTA DE PRUEBA
 app.get('/', (req, res) => {
     res.status(200).send('Servidor de Ventas CRUD está operativo.');
 });
