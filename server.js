@@ -1,107 +1,212 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const cors = require('cors');
 
-// Cargar variables de entorno (solo para desarrollo local, Render usa las variables)
-dotenv.config();
-
 const app = express();
+const PORT = process.env.PORT || 3000;
+// CRÍTICO: Asegúrate de tener la variable MONGO_URI definida en tu .env
+const MONGO_URI = process.env.MONGO_URI;
 
-// --- CONFIGURACIÓN PRINCIPAL ---
-app.use(cors());
-app.use(express.json());
+// Middleware
+app.use(cors()); 
+app.use(express.json()); 
 
-// --- CONEXIÓN A MONGODB ---
-// Utiliza la variable de entorno MONGO_URI configurada en Render
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ Conectado a MongoDB Atlas'))
-    .catch(err => {
-        console.error('❌ Error al conectar a MongoDB:', err.message);
-        process.exit(1);
-    });
+// Conexión a MongoDB
+mongoose.connect(MONGO_URI)
+    .then(() => console.log('Conectado a MongoDB Atlas'))
+    .catch(err => console.error('Error de conexión a MongoDB:', err));
 
-// --- MODELOS DE DATOS ---
-const Venta = require('./models/Venta'); 
-const Retiro = require('./models/Retiro'); 
+// =======================================================
+// === 1. ESQUEMAS: Venta, Retiro, Grupo, Integrante     ===
+// =======================================================
 
-// --- RUTAS DE API ---
-
-// 1. GUARDAR VENTA (CREATE)
-app.post('/api/ventas', async (req, res) => {
-    try {
-        const nuevaVenta = new Venta(req.body);
-        await nuevaVenta.save();
-        res.status(201).json({ message: 'Venta registrada con éxito', data: nuevaVenta });
-    } catch (error) {
-        res.status(400).json({ message: 'Error de validación al registrar la venta', error: error.message });
-    }
+const VentaSchema = new mongoose.Schema({
+    nombre: { type: String, required: true }, // Vendedor/Integrante
+    cliente: { type: String, default: 'Anónimo' }, // NUEVO: Cliente/Comprador
+    valor: { type: Number, required: true },
+    fecha: { type: Date, default: Date.now },
+    estado: { type: String, enum: ['Pagado', 'Pendiente', 'Cancelado'], default: 'Pagado' },
+    descripcion: { type: String },
+    producto: { type: String }
 });
 
-// 2. OBTENER TODAS LAS VENTAS (READ)
+const RetiroSchema = new mongoose.Schema({
+    cantidad: { type: Number, required: true },
+    descripcion: { type: String, required: true },
+    fecha: { type: Date, default: Date.now }
+});
+
+// ESQUEMAS DE GESTIÓN DE GRUPOS E INTEGRANTES
+const GrupoSchema = new mongoose.Schema({
+    nombreGrupo: { type: String, required: true, unique: true },
+    fechaCreacion: { type: Date, default: Date.now }
+});
+
+const IntegranteSchema = new mongoose.Schema({
+    nombre: { type: String, required: true }, // Nombre del vendedor
+    grupoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Grupo', required: true },
+    activo: { type: Boolean, default: true }
+});
+
+
+const Venta = mongoose.model('Venta', VentaSchema);
+const Retiro = mongoose.model('Retiro', RetiroSchema);
+const Grupo = mongoose.model('Grupo', GrupoSchema); 
+const Integrante = mongoose.model('Integrante', IntegranteSchema); 
+
+
+// ===================================
+// === 2. RUTAS DE VENTA Y RETIRO    ===
+// ===================================
+
+// GET /api/ventas (Obtener todo)
 app.get('/api/ventas', async (req, res) => {
     try {
         const ventas = await Venta.find().sort({ fecha: -1 });
         res.status(200).json(ventas);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener las ventas de la base de datos', error: error.message });
+        res.status(500).json({ message: 'Error al obtener ventas', error: error.message });
     }
 });
 
-// 3. GUARDAR RETIRO (CREATE)
-app.post('/api/retiros', async (req, res) => {
-    try {
-        const { cantidad, descripcion } = req.body;
-
-        if (!cantidad || !descripcion) {
-            return res.status(400).json({ message: 'Faltan campos: cantidad y descripción son obligatorios.' });
-        }
-        
-        const nuevoRetiro = new Retiro({ cantidad, descripcion });
-        await nuevoRetiro.save();
-        
-        res.status(201).json({ message: 'Retiro registrado con éxito', data: nuevoRetiro });
-    } catch (error) {
-        res.status(400).json({ message: 'Error al registrar el retiro', error: error.message });
-    }
-});
-
-// 4. OBTENER TODOS LOS RETIROS (READ)
+// GET /api/retiros (Obtener todo)
 app.get('/api/retiros', async (req, res) => {
     try {
         const retiros = await Retiro.find().sort({ fecha: -1 });
         res.status(200).json(retiros);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener los retiros de la base de datos', error: error.message });
+        res.status(500).json({ message: 'Error al obtener retiros', error: error.message });
     }
 });
 
-// 5. RUTA PARA BORRAR TODOS LOS DATOS (DELETE) <--- ESTE ES EL ENDPOINT NUEVO
+
+// POST /api/ventas (Registrar nueva venta) - AHORA CAPTURA 'cliente'
+app.post('/api/ventas', async (req, res) => {
+    try {
+        // nombre es el VENDEDOR/Integrante
+        const { nombre, cliente, valor, estado, descripcion, producto } = req.body;
+        
+        if (!nombre || !valor) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios: nombre (vendedor) o valor.' });
+        }
+        
+        const nuevaVenta = new Venta({ nombre, cliente, valor, estado, descripcion, producto });
+        await nuevaVenta.save();
+        res.status(201).json(nuevaVenta);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al registrar la venta', error: error.message });
+    }
+});
+
+// POST /api/retiros (Registrar nuevo retiro)
+app.post('/api/retiros', async (req, res) => {
+    try {
+        const { cantidad, descripcion } = req.body;
+        
+        if (!cantidad || !descripcion) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios: cantidad o descripción.' });
+        }
+
+        const nuevoRetiro = new Retiro({ cantidad, descripcion });
+        await nuevoRetiro.save();
+        res.status(201).json(nuevoRetiro);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al registrar el retiro', error: error.message });
+    }
+});
+
+// DELETE /api/datos-completos (Borrar todos los datos) - BORRA TODO, incluyendo GRUPOS/INTEGRANTES
 app.delete('/api/datos-completos', async (req, res) => {
     try {
-        const ventasResult = await Venta.deleteMany({});
-        const retirosResult = await Retiro.deleteMany({});
-        
-        res.status(200).json({ 
-            message: 'Todos los datos de Ventas y Retiros han sido borrados con éxito.',
-            ventasBorradas: ventasResult.deletedCount, 
-            retirosBorrados: retirosResult.deletedCount 
-        });
-
+        await Venta.deleteMany({});
+        await Retiro.deleteMany({});
+        await Grupo.deleteMany({});
+        await Integrante.deleteMany({});
+        res.status(204).send(); // 204 No Content para borrado exitoso
     } catch (error) {
-        console.error('Error al borrar los datos completos:', error);
-        res.status(500).json({ message: 'Error interno del servidor al intentar borrar los datos.', error: error.message });
+        res.status(500).json({ message: 'Error al borrar todos los datos', error: error.message });
     }
 });
 
 
-// 6. RUTA DE PRUEBA
-app.get('/', (req, res) => {
-    res.status(200).send('Servidor de Ventas CRUD está operativo.');
+// ==========================================
+// === 3. RUTAS DE GRUPOS E INTEGRANTES     ===
+// ==========================================
+
+// GET /api/grupos - Obtiene todos los grupos
+app.get('/api/grupos', async (req, res) => {
+    try {
+        const grupos = await Grupo.find({});
+        res.status(200).json(grupos);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener grupos', error: error.message });
+    }
 });
 
-// --- INICIO DEL SERVIDOR ---
-const PORT = process.env.PORT || 5000;
+// POST /api/grupos - Crea un nuevo grupo
+app.post('/api/grupos', async (req, res) => {
+    try {
+        const { nombreGrupo } = req.body;
+        if (!nombreGrupo) {
+            return res.status(400).json({ message: 'Falta el nombre del grupo.' });
+        }
+        const nuevoGrupo = new Grupo({ nombreGrupo });
+        await nuevoGrupo.save();
+        res.status(201).json(nuevoGrupo);
+    } catch (error) {
+        if (error.code === 11000) { // Error de clave duplicada (nombreGrupo debe ser único)
+             return res.status(409).json({ message: 'El nombre del grupo ya existe.' });
+        }
+        res.status(500).json({ message: 'Error al crear el grupo', error: error.message });
+    }
+});
+
+// GET /api/integrantes - Obtiene todos los integrantes (vendedores)
+app.get('/api/integrantes', async (req, res) => {
+    try {
+        const integrantes = await Integrante.find({});
+        res.status(200).json(integrantes);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener integrantes', error: error.message });
+    }
+});
+
+// POST /api/integrantes - Agrega un nuevo integrante a un grupo
+app.post('/api/integrantes', async (req, res) => {
+    try {
+        const { nombre, grupoId } = req.body;
+        if (!nombre || !grupoId) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios: nombre del vendedor o ID del grupo.' });
+        }
+        
+        // Verifica que el grupoId sea válido antes de crear el integrante
+        const grupoExiste = await Grupo.findById(grupoId);
+        if (!grupoExiste) {
+             return res.status(404).json({ message: 'Grupo no encontrado. Verifica el grupoId.' });
+        }
+
+        const nuevoIntegrante = new Integrante({ nombre, grupoId });
+        await nuevoIntegrante.save();
+        res.status(201).json(nuevoIntegrante);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al agregar el integrante', error: error.message });
+    }
+});
+
+
+// Ruta por defecto
+app.get('/', (req, res) => {
+    res.send('Control de Ventas API está activo.');
+});
+
+// Manejador de error 404
+app.use((req, res) => {
+    res.status(404).send('Error 404: Ruta de API no encontrada.');
+});
+
+
+// Iniciar el servidor
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
+    console.log(`Servidor Express escuchando en el puerto ${PORT}`);
 });
