@@ -34,12 +34,24 @@
             border-bottom: 2px solid #2ecc71;
             padding-bottom: 10px;
         }
+        /* Flexbox principal: usa grid para mejor control responsive */
         .flex-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
+        /* Responsive para contenedores de 3 columnas en desktop */
+        .flex-container.three-cols {
+             grid-template-columns: repeat(3, 1fr);
+        }
+        /* Para móvil, las 3 columnas se convierten en 1 */
+        @media (max-width: 600px) {
+            .flex-container.three-cols {
+                 grid-template-columns: 1fr;
+            }
+        }
+
         .total-box {
             background-color: #2c3e50;
             padding: 15px;
@@ -176,6 +188,39 @@
             background-color: #e74c3c;
             width: 100%;
         }
+
+        /* ================================================= */
+        /* === ESTILOS RESPONSIVOS PARA GESTIÓN DE GRUPOS === */
+        /* ================================================= */
+
+        .group-management-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Dos columnas por defecto (desktop/tablet) */
+            gap: 15px;
+        }
+
+        /* Estilo para el contenedor de Crear Grupo y Añadir Vendedor */
+        .group-form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* Espaciado entre input, select y button */
+        }
+
+        /* Fuerza al botón a no tener margin-top por defecto dentro de group-form-container */
+        .group-form-container button {
+            margin-top: 0; 
+        }
+
+        /* Responsive: En celular (ancho < 600px), apila los dos contenedores */
+        @media (max-width: 600px) {
+            .group-management-grid {
+                grid-template-columns: 1fr; /* Una sola columna en móvil */
+            }
+            /* Asegura que los botones en móvil tengan espacio si están apilados */
+            .group-management-grid > div:first-child button {
+                margin-bottom: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -233,13 +278,14 @@
         </div>
 
         <!-- Secciones de Acción y Botones -->
-        <div class="flex-container" style="grid-template-columns: 1fr 1fr 1fr;">
+        <!-- Cambiado el texto del botón a "Borrar Todo" para que sea más corto -->
+        <div class="flex-container three-cols" style="grid-template-columns: 1fr 1fr 1fr;">
             <!-- Botón Exportar -->
             <button id="exportarCsvBtn" onclick="exportarCSV()" class="export-button">Exportar CSV</button> 
             <!-- Botón de Imprimir -->
             <button id="imprimirBtn" onclick="imprimirRegistro()" class="print-button">Imprimir Historial</button>
             <!-- Botón Borrar/Administrar: Llama a abrirModalBorrado() -->
-            <button id="borrarDatosBtn" onclick="abrirModalBorrado()" class="admin-button">Borrar/Administrar Datos</button>
+            <button id="borrarDatosBtn" onclick="abrirModalBorrado()" class="admin-button">Borrar Todo</button>
         </div>
         
         <!-- Sección de Retiro de Caja -->
@@ -252,26 +298,28 @@
             </div>
         </div>
 
-        <!-- Sección de Gestión de Grupos e Integrantes -->
+        <!-- Sección de Gestión de Grupos e Integrantes - AHORA MÁS RESPONSIVA -->
         <div class="integrantes-list">
             <label style="margin-bottom: 15px; color: #f1c40f;">Gestión de Grupos y Vendedores</label>
             
-            <div class="flex-container" style="grid-template-columns: 1fr 1fr;">
+            <!-- CONTENEDOR GRID RESPONSIVO -->
+            <div class="group-management-grid">
                 <!-- Crear Nuevo Grupo -->
-                <div class="form-group">
+                <div class="group-form-container">
                     <input type="text" id="grupoNombreInput" placeholder="Nombre del nuevo Grupo (Ej: Turno Mañana)">
-                    <button onclick="agregarGrupo()" style="background-color: #2980b9; margin-top: 0;">Crear Grupo</button>
+                    <button onclick="agregarGrupo()" style="background-color: #2980b9;">Crear Grupo</button>
                 </div>
 
                 <!-- Añadir Integrante a Grupo -->
-                <div class="form-group">
+                <div class="group-form-container">
                     <input type="text" id="integranteNombreInput" placeholder="Nombre del Vendedor">
-                    <select id="grupoSelectIntegrantes" style="margin-top: 5px;">
+                    <select id="grupoSelectIntegrantes">
                         <option value="">Selecciona Grupo</option>
                     </select>
-                    <button onclick="agregarIntegrante()" style="background-color: #5c6874; margin-top: 5px;">Añadir Vendedor</button>
+                    <button onclick="agregarIntegrante()" style="background-color: #5c6874;">Añadir Vendedor</button>
                 </div>
             </div>
+            <!-- FIN CONTENEDOR GRID RESPONSIVO -->
 
             <div id="integrantesContainer" style="margin-top: 10px; font-size: 0.9em;">
                 <!-- Lista de Grupos y Vendedores se renderizan aquí -->
@@ -352,7 +400,7 @@
     
     <script>
         // CRÍTICO: ¡DEBES PEGAR AQUÍ LA URL REAL DE TU WEB SERVICE DE RENDER!
-        const API_BASE_URL = 'https://ventas-mmm.onrender.com'; 
+        const API_BASE_URL = 'https://TU-URL-REAL-DE-RENDER.onrender.com'; 
 
         // --- Datos de Configuración Local ---
 
@@ -360,9 +408,9 @@
         // === AQUÍ PUEDES CAMBIAR LOS NOMBRES y PRECIOS DE TUS PRODUCTOS (VALOR) ===
         // =========================================================================
         const ventasPorDefecto = [
-            { nombre: 'Empanada y Jugo', valor: 3000 }, 
-            { nombre: 'Aluerso Sencillo', valor: 10000 },
-            { nombre: 'producto c', valor: 9000 },
+            { nombre: 'Producto A', valor: 12.00 }, 
+            { nombre: 'Producto B', valor: 25.00 },
+            { nombre: 'Producto C', valor: 6.50 },
             // Puedes añadir más productos aquí:
             // { nombre: 'Producto D', valor: 15.75 }, 
         ];
@@ -546,6 +594,98 @@
 
         // --- FUNCIONES DE VENTA Y RETIRO ---
 
+        async function agregarVenta() {
+            const nombreVendedor = document.getElementById('integranteSelect').value;
+            const cliente = document.getElementById('clienteInput').value.trim();
+            const producto = document.getElementById('productoInput').value;
+            const tipoRegistro = document.getElementById('tipoValorSelect').value;
+            const estado = document.getElementById('estadoVentaSelect').value;
+            
+            let valor;
+            let descripcion; 
+
+            if (!nombreVendedor) {
+                mostrarMensaje('Debes seleccionar un vendedor.', 'error');
+                return;
+            }
+            
+            if (tipoRegistro === 'manual') {
+                valor = parseFloat(document.getElementById('valorManualInput').value);
+                descripcion = document.getElementById('descripcionManualInput').value.trim();
+                if (isNaN(valor) || valor <= 0) {
+                    mostrarMensaje('El valor manual debe ser un número positivo.', 'error');
+                    return;
+                }
+            } else {
+                // Registro por lista/cantidad
+                const cantidad = parseInt(document.getElementById('cantidadInput').value);
+                const productoSeleccionado = ventasPorDefecto.find(p => p.nombre === producto);
+                
+                if (isNaN(cantidad) || cantidad <= 0) {
+                    mostrarMensaje('La cantidad debe ser un número positivo.', 'error');
+                    return;
+                }
+
+                if (!productoSeleccionado) {
+                    mostrarMensaje('Producto no válido.', 'error');
+                    return;
+                }
+                
+                valor = productoSeleccionado.valor * cantidad;
+                descripcion = `${cantidad} x ${producto}`;
+            }
+
+            const ventaData = {
+                nombre: nombreVendedor,
+                cliente: cliente || 'Anónimo',
+                valor: valor,
+                estado: estado,
+                descripcion: descripcion,
+                producto: tipoRegistro === 'lista' ? producto : 'Venta Manual'
+            };
+            
+            const nuevaVenta = await fetchAPI('/api/ventas', 'POST', ventaData);
+
+            if (nuevaVenta) {
+                mostrarMensaje(`Venta de $${nuevaVenta.valor.toFixed(2)} registrada por ${nuevaVenta.nombre}.`, 'success');
+                // Limpiar campos
+                document.getElementById('clienteInput').value = '';
+                document.getElementById('cantidadInput').value = '1';
+                document.getElementById('valorManualInput').value = '';
+                document.getElementById('descripcionManualInput').value = '';
+                actualizarUI();
+            }
+        }
+
+        async function agregarRetiroCaja() {
+            const cantidad = parseFloat(document.getElementById('retiroCantidadInput').value);
+            const descripcion = document.getElementById('retiroDescripcionInput').value.trim();
+
+            if (isNaN(cantidad) || cantidad <= 0) {
+                mostrarMensaje('La cantidad a retirar debe ser un número positivo.', 'error');
+                return;
+            }
+
+            if (!descripcion) {
+                mostrarMensaje('La descripción del retiro es obligatoria.', 'error');
+                return;
+            }
+            
+            const retiroData = {
+                cantidad: cantidad,
+                descripcion: descripcion
+            };
+            
+            const nuevoRetiro = await fetchAPI('/api/retiros', 'POST', retiroData);
+
+            if (nuevoRetiro) {
+                mostrarMensaje(`Retiro de $${nuevoRetiro.cantidad.toFixed(2)} registrado.`, 'success');
+                document.getElementById('retiroCantidadInput').value = '';
+                document.getElementById('retiroDescripcionInput').value = '';
+                actualizarUI();
+            }
+        }
+
         function abrirModalBorrado() {
             document.getElementById('passwordInput').value = ''; // Limpiar campo
             document.getElementById('passwordModal').style.display = 'block';
@@ -628,81 +768,6 @@
 
             html += `</tbody></table>`;
             container.innerHTML = html;
-        }
-        
-        async function agregarVenta() {
-            // Se usa vendedor (integrante)
-            const vendedor = document.getElementById('integranteSelect').value;
-            // NUEVO: Captura el nombre del cliente
-            const cliente = document.getElementById('clienteInput').value || 'Anónimo'; 
-            
-            const productoSelect = document.getElementById('productoInput');
-            const productoNombre = productoSelect.options[productoSelect.selectedIndex].text; 
-            const tipoValor = document.getElementById('tipoValorSelect').value;
-            const estado = document.getElementById('estadoVentaSelect').value;
-            
-            let valor, descripcion;
-
-            if (tipoValor === 'manual') {
-                valor = parseFloat(document.getElementById('valorManualInput').value) || 0;
-                descripcion = document.getElementById('descripcionManualInput').value || 'Venta manual';
-            } else {
-                const cantidad = parseInt(document.getElementById('cantidadInput').value) || 1;
-                const productoElegido = ventasPorDefecto.find(p => p.nombre === productoSelect.value);
-                
-                if (!productoElegido) { mostrarMensaje("Producto no válido.", 'error'); return; }
-                
-                valor = productoElegido.valor * cantidad;
-                descripcion = `Venta de ${cantidad} x ${productoElegido.nombre}`;
-            }
-
-            if (!vendedor || !valor || valor <= 0) {
-                mostrarMensaje('Por favor, completa todos los campos requeridos (Vendedor y Valor > 0).', 'error');
-                return;
-            }
-
-            const ventaData = {
-                nombre: vendedor, // Nombre del VENDEDOR/Integrante
-                cliente: cliente,  // Nombre del CLIENTE/Comprador
-                valor: valor,
-                fecha: new Date().toISOString(),
-                estado: estado,
-                descripcion: descripcion,
-                producto: productoNombre 
-            };
-
-            const nuevaVenta = await fetchAPI('/api/ventas', 'POST', ventaData);
-
-            if (nuevaVenta) {
-                mostrarMensaje('Venta registrada con éxito.', 'success');
-                // Limpiar campos
-                document.getElementById('clienteInput').value = ''; 
-                document.getElementById('valorManualInput').value = '';
-                document.getElementById('descripcionManualInput').value = '';
-                document.getElementById('cantidadInput').value = '1';
-                actualizarUI(); 
-            }
-        }
-        
-        async function agregarRetiroCaja() {
-            const cantidad = parseFloat(document.getElementById('retiroCantidadInput').value);
-            const descripcion = document.getElementById('retiroDescripcionInput').value;
-
-            if (!cantidad || cantidad <= 0 || !descripcion) {
-                mostrarMensaje("Por favor, introduce una cantidad válida y el motivo del retiro.", 'error');
-                return;
-            }
-
-            const retiroData = { cantidad, descripcion, fecha: new Date().toISOString() };
-
-            const nuevoRetiro = await fetchAPI('/api/retiros', 'POST', retiroData);
-
-            if (nuevoRetiro) {
-                mostrarMensaje('Retiro registrado con éxito en MongoDB.', 'success');
-                document.getElementById('retiroCantidadInput').value = '';
-                document.getElementById('retiroDescripcionInput').value = '';
-                actualizarUI(); 
-            }
         }
         
         async function exportarCSV() {
