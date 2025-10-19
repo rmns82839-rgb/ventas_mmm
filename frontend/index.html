@@ -16,11 +16,10 @@
             align-items: center;
             min-height: 100vh;
             position: relative;
-            /* Oculta overflow para que las burbujas no creen scrollbar */
             overflow-x: hidden; 
         }
         
-        /* Estilos de las burbujas (REINSERTADOS) */
+        /* Estilos de las burbujas */
         .bubbles {
             position: absolute;
             top: 0;
@@ -28,7 +27,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            z-index: 0; /* Asegura que estén detrás del contenido */
+            z-index: 0; 
         }
 
         .bubbles li {
@@ -43,92 +42,20 @@
             border-radius: 50%;
         }
 
-        .bubbles li:nth-child(1) {
-            left: 25%;
-            width: 80px;
-            height: 80px;
-            animation-delay: 0s;
-        }
-
-        .bubbles li:nth-child(2) {
-            left: 10%;
-            width: 20px;
-            height: 20px;
-            animation-delay: 2s;
-            animation-duration: 12s;
-        }
-
-        .bubbles li:nth-child(3) {
-            left: 70%;
-            width: 20px;
-            height: 20px;
-            animation-delay: 4s;
-        }
-
-        .bubbles li:nth-child(4) {
-            left: 40%;
-            width: 60px;
-            height: 60px;
-            animation-delay: 0s;
-            animation-duration: 18s;
-        }
-
-        .bubbles li:nth-child(5) {
-            left: 65%;
-            width: 20px;
-            height: 20px;
-            animation-delay: 0s;
-        }
-
-        .bubbles li:nth-child(6) {
-            left: 75%;
-            width: 110px;
-            height: 110px;
-            animation-delay: 3s;
-        }
-
-        .bubbles li:nth-child(7) {
-            left: 35%;
-            width: 150px;
-            height: 150px;
-            animation-delay: 7s;
-        }
-
-        .bubbles li:nth-child(8) {
-            left: 50%;
-            width: 25px;
-            height: 25px;
-            animation-delay: 15s;
-            animation-duration: 45s;
-        }
-
-        .bubbles li:nth-child(9) {
-            left: 20%;
-            width: 15px;
-            height: 15px;
-            animation-delay: 2s;
-            animation-duration: 35s;
-        }
-
-        .bubbles li:nth-child(10) {
-            left: 85%;
-            width: 150px;
-            height: 150px;
-            animation-delay: 11s;
-        }
+        .bubbles li:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; }
+        .bubbles li:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; animation-duration: 12s; }
+        .bubbles li:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-delay: 4s; }
+        .bubbles li:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; animation-duration: 18s; }
+        .bubbles li:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-delay: 0s; }
+        .bubbles li:nth-child(6) { left: 75%; width: 110px; height: 110px; animation-delay: 3s; }
+        .bubbles li:nth-child(7) { left: 35%; width: 150px; height: 150px; animation-delay: 7s; }
+        .bubbles li:nth-child(8) { left: 50%; width: 25px; height: 25px; animation-delay: 15s; animation-duration: 45s; }
+        .bubbles li:nth-child(9) { left: 20%; width: 15px; height: 15px; animation-delay: 2s; animation-duration: 35s; }
+        .bubbles li:nth-child(10) { left: 85%; width: 150px; height: 150px; animation-delay: 11s; }
 
         @keyframes animate {
-            0% {
-                transform: translateY(0) rotate(0deg);
-                opacity: 1;
-                border-radius: 0;
-            }
-
-            100% {
-                transform: translateY(-1000px) rotate(720deg);
-                opacity: 0;
-                border-radius: 50%;
-            }
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 0; }
+            100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; }
         }
         /* FIN Estilos de las burbujas */
         
@@ -136,7 +63,6 @@
             background-color: #34495e;
             padding: 30px;
             border-radius: 12px;
-            /* Sombra más marcada */
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7); 
             width: 100%;
             max-width: 900px;
@@ -149,18 +75,15 @@
             border-bottom: 2px solid #2ecc71;
             padding-bottom: 10px;
         }
-        /* Flexbox principal: usa grid para mejor control responsive */
         .flex-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
-        /* Responsive para contenedores de 3 columnas en desktop */
         .flex-container.three-cols {
              grid-template-columns: repeat(3, 1fr);
         }
-        /* Para móvil, las 3 columnas se convierten en 1 */
         @media (max-width: 600px) {
             .flex-container.three-cols {
                  grid-template-columns: 1fr;
@@ -174,27 +97,12 @@
             text-align: center;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
-        .total-label {
-            font-size: 0.9em;
-            color: #bdc3c7;
-            margin-bottom: 5px;
-        }
-        .total-valor {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #f1c40f;
-        }
+        .total-label { font-size: 0.9em; color: #bdc3c7; margin-bottom: 5px; }
+        .total-valor { font-size: 1.8em; font-weight: bold; color: #f1c40f; }
         .caja-valor { color: #2ecc71; }
         .retiros-valor { color: #e74c3c; }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-bottom: 5px;
-            font-size: 0.9em;
-            color: #bdc3c7;
-        }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 5px; font-size: 0.9em; color: #bdc3c7; }
         input, select {
             padding: 10px;
             border-radius: 5px;
@@ -204,9 +112,7 @@
             outline: none;
             transition: border-color 0.3s;
         }
-        input:focus, select:focus {
-            border-color: #3498db;
-        }
+        input:focus, select:focus { border-color: #3498db; }
         button {
             padding: 10px 15px;
             border: none;
@@ -217,16 +123,11 @@
             transition: background-color 0.3s;
             margin-top: 10px;
         }
-        button:hover {
-            opacity: 0.9;
-        }
+        button:hover { opacity: 0.9; }
+        
         /* Estilos para el registro */
-        #registroVentasContainer {
-            overflow-x: auto; /* CRÍTICO: Permite el scroll horizontal */
-            padding-bottom: 10px; /* Para que la barra de scroll se vea bien */
-        }
+        #registroVentasContainer { overflow-x: auto; padding-bottom: 10px; }
         #registroVentasContainer table {
-            /* AJUSTE CLAVE: Aumentar el ancho mínimo para dar espacio al botón */
             min-width: 950px; 
             width: 100%;
             border-collapse: collapse;
@@ -242,45 +143,40 @@
             color: #ecf0f1;
             text-align: left;
         }
-        #registroVentasContainer tr:hover {
-            background-color: #44607a;
+        #registroVentasContainer tr:hover { background-color: #44607a; }
+        
+        /* Estilos para los botones dentro de la tabla */
+        .action-btns-cell {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap; 
+            justify-content: center;
         }
-        /* Estilos para el botón de eliminar dentro de la tabla */
-        .delete-btn-table {
-            background-color: #e74c3c; /* ROJO */
-            padding: 5px 10px;
+        .action-btn {
+            padding: 5px 8px;
             border-radius: 5px;
             color: white;
             font-size: 0.8em;
             font-weight: normal;
-            margin: 0; /* Eliminar el margin-top de button general */
+            margin: 0; 
             display: inline-block;
-            white-space: nowrap; /* Evita que el texto se parta */
+            white-space: nowrap; 
         }
-        .delete-btn-table:hover {
-            background-color: #c0392b;
-        }
+        .edit-btn { background-color: #f39c12; }
+        .edit-btn:hover { background-color: #e67e22; }
+        .pay-btn { background-color: #3498db; }
+        .pay-btn:hover { background-color: #2980b9; }
+        .delete-btn { background-color: #e74c3c; }
+        .delete-btn:hover { background-color: #c0392b; }
 
-        /* Estilos para los botones que antes eran blancos y no se veían */
-        .admin-button {
-            background-color: #e74c3c; /* ROJO para advertencia de borrar */
-        }
-        .admin-button:hover {
-            background-color: #c0392b;
-        }
-        .export-button {
-            background-color: #27ae60; /* Verde para exportar */
-        }
-        .export-button:hover {
-            background-color: #2ecc71;
-        }
-        .print-button {
-            background-color: #34495e; /* Oscuro para imprimir */
-            border: 1px solid #7f8c8d;
-        }
-        .print-button:hover {
-            background-color: #44607a;
-        }
+
+        .admin-button { background-color: #e74c3c; }
+        .admin-button:hover { background-color: #c0392b; }
+        .export-button { background-color: #27ae60; }
+        .export-button:hover { background-color: #2ecc71; }
+        .print-button { background-color: #34495e; border: 1px solid #7f8c8d; }
+        .print-button:hover { background-color: #44607a; }
+        
         /* MODAL CSS */
         .modal {
             display: none; 
@@ -295,142 +191,45 @@
         }
         .modal-content {
             background-color: #34495e;
-            margin: 15% auto; 
+            margin: 5% auto; 
             padding: 30px;
             border: 1px solid #888;
-            width: 80%; 
-            max-width: 400px;
+            width: 90%; 
+            max-width: 500px;
             border-radius: 10px;
-            text-align: center;
             box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            position: relative;
         }
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
         .close-btn:hover,
-        .close-btn:focus {
-            color: #ecf0f1;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        #passwordInput {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 1.2em;
-        }
-        #confirmDeleteBtn {
-            background-color: #e74c3c;
-            width: 100%;
-        }
+        .close-btn:focus { color: #ecf0f1; text-decoration: none; cursor: pointer; }
+        #passwordInput { margin-top: 15px; text-align: center; font-size: 1.2em; }
+        #confirmDeleteBtn { background-color: #e74c3c; width: 100%; }
 
-        /* ================================================= */
-        /* === ESTILOS RESPONSIVOS PARA GESTIÓN DE GRUPOS === */
-        /* ================================================= */
-
+        /* Estilos Responsivos */
         .group-management-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Dos columnas por defecto (desktop/tablet) */
+            grid-template-columns: 1fr 1fr; 
             gap: 15px;
         }
-
-        /* Estilo para el contenedor de Crear Grupo y Añadir Vendedor */
-        .group-form-container {
-            display: flex;
-            flex-direction: column;
-            gap: 5px; /* Espaciado entre input, select y button */
-        }
-
-        /* Fuerza al botón a no tener margin-top por defecto dentro de group-form-container */
-        .group-form-container button {
-            margin-top: 0; 
-        }
-
-        /* Responsive: En celular (ancho < 600px), apila los dos contenedores */
+        .group-form-container { display: flex; flex-direction: column; gap: 5px; }
+        .group-form-container button { margin-top: 0; }
         @media (max-width: 600px) {
-            .group-management-grid {
-                grid-template-columns: 1fr; /* Una sola columna en móvil */
-            }
-            /* Asegura que los botones en móvil tengan espacio si están apilados */
-            .group-management-grid > div:first-child button {
-                margin-bottom: 15px;
-            }
-            
-            /* En móvil, queremos que la tabla sea la única que desborde */
-            .container {
-                padding: 15px;
-            }
+            .group-management-grid { grid-template-columns: 1fr; }
+            .group-management-grid > div:first-child button { margin-bottom: 15px; }
+            .container { padding: 15px; }
+            .action-btns-cell { justify-content: start; }
         }
-        
-        /* ================================================= */
-        /* === ESTILOS RESPONSIVOS PARA TABLA DE VENTAS (MODO SCROLL) === */
-        /* ================================================= */
-        /* Desactivamos el modo "tarjeta" en móvil para usar el scroll horizontal.
-           Mantenemos la tabla con sus estilos normales pero aseguramos el scroll.
-        */
-        @media screen and (max-width: 600px) {
-            /* Deshacer estilos de tarjeta anteriores */
-            #registroVentasContainer table thead {
-                display: table-header-group; /* Muestra encabezados */
-            }
-
-            #registroVentasContainer table, 
-            #registroVentasContainer tbody, 
-            #registroVentasContainer tr, 
-            #registroVentasContainer td {
-                display: table-row-group; /* Mantiene la estructura de tabla */
-                width: auto;
-                border: none;
-                margin: 0;
-                padding: 0;
-            }
-
-            #registroVentasContainer tr {
-                border: none;
-                box-shadow: none;
-                padding: 0;
-            }
-
-            #registroVentasContainer td {
-                display: table-cell; /* Vuelve a modo celda */
-                text-align: left;
-                padding: 10px;
-                border-bottom: 1px solid #2c3e50;
-                position: static;
-            }
-
-            /* Eliminar etiquetas pseudo-elemento */
-            #registroVentasContainer td::before {
-                content: none;
-            }
-
-            /* Asegurar el estilo del valor y la fecha */
-            #tablaMovimientos td:nth-of-type(3) {
-                text-align: right !important;
-                font-size: 0.9em; /* Vuelve al tamaño normal */
-            }
-             #tablaMovimientos td:nth-of-type(5) {
-                text-align: left; /* Alineación normal en el scroll */
-                font-size: 0.9em;
+        /* Asegura que la tabla tenga scroll horizontal en móvil */
+        @media screen and (max-width: 950px) {
+            #registroVentasContainer table {
+                min-width: 1100px; 
             }
         }
     </style>
 </head>
 <body>
-    <ul class="bubbles">
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-    </ul>
+    <ul class="bubbles"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ul>
     <div class="container">
         <h1>Control de Ventas</h1>
 
@@ -502,6 +301,7 @@
                     <button onclick="agregarIntegrante()" style="background-color: #5c6874;">Añadir Vendedor</button>
                 </div>
             </div>
+
             <div id="integrantesContainer" style="margin-top: 10px; font-size: 0.9em;">
                 <p style="color: #bdc3c7;">Cargando grupos y vendedores...</p>
             </div>
@@ -572,32 +372,64 @@
         </div>
     </div>
     
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('editModal').style.display='none'">&times;</span>
+            <h3 style="color: #f39c12;">✍️ Editar Venta</h3>
+            <input type="hidden" id="editVentaId">
+            
+            <div class="form-group">
+                <label for="editNombreInput">Vendedor (No editable)</label>
+                <input type="text" id="editNombreInput" disabled>
+            </div>
+
+            <div class="flex-container">
+                <div class="form-group">
+                    <label for="editClienteInput">Cliente/Comprador</label>
+                    <input type="text" id="editClienteInput">
+                </div>
+                <div class="form-group">
+                    <label for="editValorInput">Valor ($)</label>
+                    <input type="number" id="editValorInput" step="0.01" min="0.01">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="editDescripcionInput">Descripción</label>
+                <input type="text" id="editDescripcionInput">
+            </div>
+            
+            <div class="form-group">
+                <label for="editEstadoSelect">Estado</label>
+                <select id="editEstadoSelect">
+                    <option value="Pagado">Pagado</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Cancelado">Cancelado</option>
+                </select>
+            </div>
+
+            <button onclick="guardarEdicionVenta()" style="background-color: #f39c12; width: 100%;">Guardar Cambios</button>
+        </div>
+    </div>
     <script>
         // CRÍTICO: ¡URL REAL DE TU WEB SERVICE DE RENDER INSERTADA!
         const API_BASE_URL = 'https://ventas-mmm.onrender.com'; 
 
         // --- Datos de Configuración Local ---
-
-        // =========================================================================
-        // === LISTA DE PRODUCTOS ACTUALIZADA SEGÚN TU SOLICITUD ===
-        // =========================================================================
         const ventasPorDefecto = [
             { nombre: 'Actividad', valor: 3000.00 }, 
             { nombre: 'Almuerzo sencillo', valor: 10000.00 },
             { nombre: 'Producto C', valor: 15000.00 },
         ];
-        // =========================================================================
-
+        
         // IMPORTANTE: Esta es la CLAVE de seguridad para borrar. CÁMBIALA si quieres más seguridad.
         const CLAVE_SEGURIDAD = "1234"; 
         
-        // Almacenamiento local de la data de Grupos e Integrantes para la UI
         let grupos = [];
         let integrantes = []; 
 
-        // --- Funciones de Lógica y UI (Ajustadas para la API) ---
+        // --- Funciones de Lógica y UI ---
 
-        // Función para enviar una solicitud al backend
         async function fetchAPI(endpoint, method = 'GET', data = null) {
             try {
                 const url = `${API_BASE_URL}${endpoint}`;
@@ -610,8 +442,8 @@
                 const response = await fetch(url, options);
                 
                 if (response.ok) {
-                    // Maneja respuestas vacías (como 204 No Content o DELETE exitoso)
                     if (response.status === 204 || method === 'DELETE') return true; 
+                    if (response.headers.get("content-length") === "0") return {}; 
                     return response.json(); 
                 } else {
                     const errorText = await response.text();
@@ -623,9 +455,8 @@
                         errorMessage = `Error ${response.status}: ${errorText || 'Error de red o servidor'}`;
                     }
                     mostrarMensaje(`Error ${method} ${endpoint}: ${errorMessage}`, 'error');
-                    // Devuelve array vacío o null según el endpoint
-                    if (endpoint.includes('/ventas') || endpoint.includes('/retiros')) return []; 
-                    if (endpoint.includes('/integrantes') || endpoint.includes('/grupos')) return [];
+                    // Devuelve un array vacío o null/false según el contexto de la llamada
+                    if (endpoint.includes('/ventas') || endpoint.includes('/retiros') || endpoint.includes('/integrantes') || endpoint.includes('/grupos')) return [];
                     return null; 
                 }
             } catch (error) {
@@ -637,7 +468,6 @@
         
         function mostrarMensaje(mensaje, tipo) {
             console.log(`${tipo.toUpperCase()}: ${mensaje}`);
-            // Usamos un simple alert por simplicidad, aunque se recomienda un modal personalizado
             alert(mensaje); 
         }
 
@@ -645,7 +475,6 @@
              const ventas = await fetchAPI('/api/ventas', 'GET');
              const retiros = await fetchAPI('/api/retiros', 'GET'); 
              
-             // Cargar datos de Grupos e Integrantes
              await cargarGruposEIntegrantes(); 
 
              if (!Array.isArray(ventas) || !Array.isArray(retiros)) { 
@@ -662,7 +491,7 @@
              renderRegistroVentas(ventas, retiros);
         }
 
-        // --- FUNCIONES DE GRUPOS E INTEGRANTES (NUEVO) ---
+        // --- FUNCIONES DE GRUPOS E INTEGRANTES ---
         
         async function cargarGruposEIntegrantes() {
             const gruposData = await fetchAPI('/api/grupos', 'GET');
@@ -789,7 +618,6 @@
                     return;
                 }
             } else {
-                // Registro por lista/cantidad
                 const cantidad = parseInt(document.getElementById('cantidadInput').value);
                 const productoSeleccionado = ventasPorDefecto.find(p => p.nombre === producto);
                 
@@ -820,7 +648,6 @@
 
             if (nuevaVenta) {
                 mostrarMensaje(`Venta de $${nuevaVenta.valor.toFixed(2)} registrada por ${nuevaVenta.nombre}.`, 'success');
-                // Limpiar campos
                 document.getElementById('clienteInput').value = '';
                 document.getElementById('cantidadInput').value = '1';
                 document.getElementById('valorManualInput').value = '';
@@ -859,7 +686,7 @@
         }
 
         function abrirModalBorrado() {
-            document.getElementById('passwordInput').value = ''; // Limpiar campo
+            document.getElementById('passwordInput').value = ''; 
             document.getElementById('passwordModal').style.display = 'block';
         }
 
@@ -873,34 +700,130 @@
                 return;
             }
 
-            // Ocultar el modal inmediatamente
             document.getElementById('passwordModal').style.display = 'none';
-            
             mostrarMensaje('Intentando borrar todos los datos de MongoDB...', 'info');
 
-            // Llamada al endpoint DELETE (Borrar Ventas, Retiros, Grupos e Integrantes)
             const resultado = await fetchAPI('/api/datos-completos', 'DELETE');
 
             if (resultado === true) {
                 mostrarMensaje('✅ ¡Borrado Exitoso! Todos los datos han sido eliminados de la base de datos.', 'success');
-                actualizarUI(); // Recarga la UI para mostrar 0.00
+                actualizarUI(); 
             } else {
                  mostrarMensaje('❌ Error al intentar borrar los datos del servidor.', 'error');
             }
         }
         
-        // === LÓGICA DE ELIMINACIÓN (FUNCIÓN AGREGADA) ===
-        async function eliminarVenta(ventaId) {
-            if (!confirm('ADVERTENCIA: ¿Estás seguro de que deseas ELIMINAR permanentemente esta venta?')) {
+        // =========================================================
+        // === FUNCIONES PARA EDITAR Y MARCAR COMO PAGADO (DEUDA)===
+        // =========================================================
+
+        async function abrirModalEdicion(ventaId) {
+            const ventas = await fetchAPI('/api/ventas', 'GET');
+            const venta = ventas.find(v => v._id === ventaId);
+
+            if (!venta) {
+                mostrarMensaje('Venta no encontrada.', 'error');
                 return;
             }
 
+            document.getElementById('editVentaId').value = venta._id;
+            document.getElementById('editNombreInput').value = venta.nombre;
+            document.getElementById('editClienteInput').value = venta.cliente || '';
+            document.getElementById('editValorInput').value = venta.valor.toFixed(2);
+            document.getElementById('editDescripcionInput').value = venta.descripcion || '';
+            document.getElementById('editEstadoSelect').value = venta.estado;
+
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        async function guardarEdicionVenta() {
+            const id = document.getElementById('editVentaId').value;
+            const valor = parseFloat(document.getElementById('editValorInput').value);
+            const cliente = document.getElementById('editClienteInput').value.trim();
+            const descripcion = document.getElementById('editDescripcionInput').value.trim();
+            const estado = document.getElementById('editEstadoSelect').value;
+
+            if (isNaN(valor) || valor <= 0) {
+                mostrarMensaje('El valor de la venta debe ser un número positivo.', 'error');
+                return;
+            }
+
+            const updatedData = {
+                cliente: cliente,
+                valor: valor,
+                descripcion: descripcion,
+                estado: estado
+            };
+
+            const ventaActualizada = await fetchAPI(`/api/ventas/${id}`, 'PUT', updatedData);
+
+            if (ventaActualizada) {
+                mostrarMensaje(`✅ Venta ${id.slice(-6)} actualizada con éxito.`, 'success');
+                document.getElementById('editModal').style.display = 'none';
+                actualizarUI();
+            }
+        }
+        
+        // 💥 Funcionalidad de Pago de Deudas 💥
+        async function marcarComoPagado(ventaId) {
+            if (!confirm("¿Confirma que la deuda de esta venta ha sido PAGADA?")) {
+                return;
+            }
+
+            const updatedData = { estado: 'Pagado' };
+            const ventaActualizada = await fetchAPI(`/api/ventas/${ventaId}`, 'PUT', updatedData);
+
+            if (ventaActualizada) {
+                mostrarMensaje(`✅ Venta ${ventaId.slice(-6)} marcada como Pagada.`, 'success');
+                actualizarUI();
+            }
+        }
+        // =========================================================
+
+
+        // === FUNCIÓN DE ELIMINACIÓN CON REGISTRO DE MOTIVO (ANULACIÓN) ===
+        async function eliminarVenta(ventaId) {
+            const ventas = await fetchAPI('/api/ventas', 'GET');
+            const venta = ventas.find(v => v._id === ventaId);
+
+            if (!venta) {
+                mostrarMensaje('Error: Venta no encontrada en la base de datos (ID incorrecto o ya borrada).', 'error');
+                return;
+            }
+            
+            if (!confirm(`ADVERTENCIA: ¿Estás seguro de que deseas ANULAR permanentemente la venta de $${venta.valor.toFixed(2)} por ${venta.nombre}? Esto registrará un RETIRO/AJUSTE en caja.`)) {
+                return;
+            }
+
+            const motivoBorrado = prompt("Por favor, introduce el motivo de la anulación/borrado (OBLIGATORIO):");
+
+            if (!motivoBorrado || motivoBorrado.trim() === "") {
+                mostrarMensaje('El motivo de la anulación es obligatorio.', 'error');
+                return;
+            }
+
+            // 1. Registrar el "Retiro" de la caja (Anulación/Ajuste)
+            const retiroData = {
+                cantidad: venta.valor,
+                descripcion: `ANULACIÓN VENTA (ID: ${ventaId.slice(-6)}): ${motivoBorrado} | Vendedor: ${venta.nombre} | Cliente: ${venta.cliente}`
+            };
+            
+            const nuevoRetiro = await fetchAPI('/api/retiros', 'POST', retiroData);
+
+            if (!nuevoRetiro) {
+                mostrarMensaje('❌ Error CRÍTICO: No se pudo registrar el movimiento de anulación (Retiro). Venta NO borrada.', 'error');
+                return;
+            }
+            
+            mostrarMensaje(`Anulación de $${venta.valor.toFixed(2)} registrada como retiro. Procediendo a eliminar la venta...`, 'info');
+
+
+            // 2. Eliminar la venta del registro
             try {
-                // Endpoint para eliminar una venta específica. Se asume que en el server.js existe: DELETE /api/ventas/:id
                 const resultado = await fetchAPI(`/api/ventas/${ventaId}`, 'DELETE');
 
                 if (resultado === true) {
-                    mostrarMensaje('Venta eliminada con éxito.', 'success');
+                    mostrarMensaje(`✅ Venta eliminada con éxito. Anulación registrada por: ${motivoBorrado}`, 'success');
                     await actualizarUI(); 
                 } else {
                     mostrarMensaje('❌ Error al intentar eliminar la venta.', 'error');
@@ -930,16 +853,15 @@
             
             const movimientos = [
                 ...ventas.map(v => ({
-                    id: v._id, // AGREGAR EL ID DE LA VENTA
+                    id: v._id, 
                     tipo: 'Venta', 
-                    // Descripción mejorada
                     descripcion: `Vendedor: ${v.nombre} | Cliente: ${v.cliente || 'Anónimo'} | ${v.descripcion || v.producto}`, 
                     valor: v.valor,
                     fecha: new Date(v.fecha),
                     estado: v.estado
                 })),
                 ...retiros.map(r => ({
-                    id: null, // Los retiros no tienen botón de acción
+                    id: null, // Retiro no tiene ID de venta
                     tipo: 'Retiro', 
                     descripcion: r.descripcion, 
                     valor: r.cantidad,
@@ -953,25 +875,39 @@
                 return;
             }
 
-            // AJUSTE CLAVE EN LOS ANCHOS DE COLUMNAS (THEAD)
             let html = `<table id="tablaMovimientos" style="border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead><tr>
                         <th style="width: 10%; padding: 10px; text-align: left;">Tipo</th>
-                        <th style="width: 38%; padding: 10px; text-align: left;">Descripción</th>
+                        <th style="width: 35%; padding: 10px; text-align: left;">Descripción</th>
                         <th style="width: 12%; padding: 10px; text-align: right;">Valor ($)</th>
                         <th style="width: 10%; padding: 10px; text-align: center;">Estado</th>
-                        <th style="width: 20%; padding: 10px; text-align: center;">Fecha</th>
-                        <th style="width: 10%; padding: 10px; text-align: center;">Acciones</th>
+                        <th style="width: 15%; padding: 10px; text-align: center;">Fecha</th>
+                        <th style="width: 18%; padding: 10px; text-align: center;">Acciones</th>
                         </tr></thead><tbody>`;
 
             movimientos.forEach(m => {
                 const valorDisplay = m.tipo === 'Retiro' ? `-$${m.valor.toFixed(2)}` : `$${m.valor.toFixed(2)}`;
-                const color = m.tipo === 'Retiro' ? '#e74c3c' : m.estado === 'Pagado' ? '#2ecc71' : '#f1c40f';
-                const estadoDisplay = m.tipo === 'Retiro' ? 'COMPLETADO' : m.estado;
+                let color = '#2ecc71'; // Pagado
+                if (m.tipo === 'Retiro') color = '#e74c3c';
+                else if (m.estado === 'Pendiente') color = '#f1c40f';
+                else if (m.estado === 'Cancelado') color = '#95a5a6';
+
+                const estadoDisplay = m.tipo === 'Retiro' ? 'ANULACIÓN/RETIRO' : m.estado;
                 
-                // BOTÓN DE ELIMINAR con la nueva clase CSS
-                const accionButton = m.tipo === 'Venta' 
-                    ? `<button onclick="eliminarVenta('${m.id}')" class="delete-btn-table">Eliminar</button>` 
-                    : 'N/A';
+                let accionButton = 'N/A';
+                
+                if (m.tipo === 'Venta') {
+                    accionButton = `<div class="action-btns-cell">`;
+                    accionButton += `<button onclick="abrirModalEdicion('${m.id}')" class="action-btn edit-btn">Editar</button>`;
+                    
+                    if (m.estado === 'Pendiente') {
+                        // Botón de Pago de Deudas
+                        accionButton += `<button onclick="marcarComoPagado('${m.id}')" class="action-btn pay-btn">Pagar Deuda</button>`;
+                    } else if (m.estado !== 'Cancelado') {
+                         // Botón de Anulación/Eliminación
+                        accionButton += `<button onclick="eliminarVenta('${m.id}')" class="action-btn delete-btn">Anular</button>`;
+                    }
+                    accionButton += `</div>`;
+                }
                 
                 html += `<tr style="border-bottom: 1px solid #34495e;">
                             <td style="padding: 10px;">${m.tipo}</td>
@@ -996,40 +932,36 @@
                 return;
             }
 
-            // Encabezados del CSV - Ahora incluye Vendedor y Cliente
             let csvContent = "Tipo,Fecha,Valor,Estado,Vendedor/Integrante,Cliente,Descripcion,Producto\n";
 
-            // Procesar Ventas
             ventas.forEach(v => {
                 const row = [
                     "Venta",
                     new Date(v.fecha).toLocaleString(),
                     v.valor.toFixed(2),
                     v.estado,
-                    v.nombre, // Vendedor
-                    v.cliente || 'Anónimo', // Cliente (NUEVO)
-                    `"${(v.descripcion || '').replace(/"/g, '""')}"`, // Escapar comillas
+                    v.nombre, 
+                    v.cliente || 'Anónimo', 
+                    `"${(v.descripcion || '').replace(/"/g, '""')}"`, 
                     v.producto || ''
                 ].join(",");
                 csvContent += row + "\n";
             });
 
-            // Procesar Retiros
             retiros.forEach(r => {
                 const row = [
                     "Retiro",
                     new Date(r.fecha).toLocaleString(),
-                    (-r.cantidad).toFixed(2), // Negativo para los retiros
-                    "Completado",
-                    "", // Sin vendedor
-                    "", // Sin cliente
-                    `"${r.descripcion.replace(/"/g, '""')}"`, // Escapar comillas
+                    (-r.cantidad).toFixed(2), 
+                    "Anulación/Retiro",
+                    "", 
+                    "", 
+                    `"${r.descripcion.replace(/"/g, '""')}"`, 
                     ""
                 ].join(",");
                 csvContent += row + "\n";
             });
 
-            // Crear y descargar el Blob CSV
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -1045,7 +977,6 @@
         }
 
         function imprimirRegistro() {
-            // ... (Función de impresión sin cambios) ...
             const printWindow = window.open('', '', 'height=600,width=800');
             
             const tableHTML = document.getElementById('registroVentasContainer').innerHTML;
@@ -1081,7 +1012,6 @@
              ventasPorDefecto.forEach(p => {
                  const option = document.createElement('option');
                  option.value = p.nombre;
-                 // Mostrar el valor en la lista de selección
                  option.textContent = `${p.nombre} ($${p.valor.toFixed(2)})`;
                  productoInput.appendChild(option);
              });
@@ -1091,13 +1021,11 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             
-            // Botón Mostrar/Ocultar Registro
             document.getElementById('mostrarRegistroVentasBtn').addEventListener('click', () => {
                 const container = document.getElementById('registroVentasContainer');
                 container.style.display = container.style.display === 'none' ? 'block' : 'none';
             });
             
-            // Lógica de Venta Manual vs Lista
             const tipoValorSelect = document.getElementById('tipoValorSelect');
             const cantidadGroup = document.getElementById('cantidadGroup');
             const valorManualGroup = document.getElementById('valorManualGroup');
@@ -1114,12 +1042,10 @@
                     descripcionManualGroup.style.display = 'none';
                 }
             });
-            tipoValorSelect.dispatchEvent(new Event('change')); // Ejecutar al inicio
+            tipoValorSelect.dispatchEvent(new Event('change')); 
 
-
-            // Inicialización final
             inicializarProductos();
-            actualizarUI(); // Carga de datos reales y de vendedores
+            actualizarUI(); 
         });
     </script>
 </body>
