@@ -29,7 +29,7 @@ const VentaSchema = new mongoose.Schema({
     estado: { type: String, enum: ['Pagado', 'Pendiente', 'Cancelado'], default: 'Pagado' },
     descripcion: { type: String },
     producto: { type: String },
-    // NUEVO CAMPO: Rastrea la cantidad de dinero pagada de la venta total
+    // NUEVO CAMPO CLAVE: Rastrea la cantidad de dinero pagada de la venta total
     montoPagado: { type: Number, default: 0 } 
 });
 
@@ -86,7 +86,6 @@ app.get('/api/retiros', async (req, res) => {
 // POST /api/ventas (Registrar nueva venta) - MODIFICADO para inicializar montoPagado
 app.post('/api/ventas', async (req, res) => {
     try {
-        // nombre es el VENDEDOR/Integrante
         const { nombre, cliente, valor, estado, descripcion, producto } = req.body;
         
         if (!nombre || !valor) {
@@ -97,6 +96,9 @@ app.post('/api/ventas', async (req, res) => {
         // Si el estado es Pagado, se considera que el monto inicial pagado es el valor total
         if (estado === 'Pagado') {
             montoPagadoInicial = valor;
+        } else if (estado === 'Pendiente') {
+            // Si es pendiente, el monto pagado debe ser 0 para evitar errores de tipo en el frontend
+            montoPagadoInicial = 0;
         }
 
         const nuevaVenta = new Venta({ 
@@ -106,7 +108,7 @@ app.post('/api/ventas', async (req, res) => {
             estado, 
             descripcion, 
             producto,
-            montoPagado: montoPagadoInicial // Se añade el campo aquí
+            montoPagado: montoPagadoInicial 
         });
         await nuevaVenta.save();
         res.status(201).json(nuevaVenta);
@@ -117,6 +119,7 @@ app.post('/api/ventas', async (req, res) => {
 
 
 // PUT /api/ventas/pago/:id (Registrar pago parcial o total) - RUTA NUEVA
+// Esta ruta se usa para cambiar el estado de Pendiente a Pagado o registrar un abono.
 app.put('/api/ventas/pago/:id', async (req, res) => {
     const { id } = req.params;
     const { monto } = req.body; // Monto a pagar en esta transacción
@@ -132,7 +135,7 @@ app.put('/api/ventas/pago/:id', async (req, res) => {
             return res.status(404).json({ message: 'Venta no encontrada.' });
         }
         
-        // Bloquear pagos a ventas canceladas o ya pagadas
+        // Bloquear pagos a ventas canceladas 
         if (venta.estado === 'Cancelado') {
              return res.status(400).json({ message: 'No se puede registrar pagos en ventas Canceladas.' });
         }
@@ -156,9 +159,9 @@ app.put('/api/ventas/pago/:id', async (req, res) => {
         // Verificar si se completó el pago
         if (venta.montoPagado >= venta.valor - 0.01) { 
             venta.estado = 'Pagado';
-            venta.montoPagado = venta.valor; // Asegura el valor exacto
+            venta.montoPagado = venta.valor; // Asegura el valor exacto para evitar decimales
         } else {
-             // Si aún queda deuda, el estado se mantiene o se establece en 'Pendiente'
+             // Si aún queda deuda, el estado se establece en 'Pendiente' (en caso de que estuviera en otro estado)
              venta.estado = 'Pendiente'; 
         }
         
@@ -282,3 +285,25 @@ app.use((req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor Express escuchando en el puerto ${PORT}`);
 });
+```eof
+
+---
+
+### Cómo usar la nueva funcionalidad desde tu Frontend
+
+Una vez que implementes y reinicies el servidor, podrás usar el nuevo *endpoint* para manejar los pagos de las ventas pendientes (las que se muestran con estado "Pendiente" en tu registro):
+
+| Objetivo | Método | Ruta (Endpoint) | Body (Datos a enviar) |
+| :--- | :--- | :--- | :--- |
+| **Pagar Parcialmente** (Abono) | `PUT` | `/api/ventas/pago/:id` | `{ "monto": 1000.00 }` |
+| **Pagar Totalmente** | `PUT` | `/api/ventas/pago/:id` | `{ "monto": 3000.00 }` (el valor total restante) |
+
+**Explicación del `PUT`:**
+
+* **`id`**: Es el ID de la venta pendiente que deseas modificar.
+* **`monto`**: Es el valor exacto del pago (abono) que se está realizando.
+
+El servidor se encargará de:
+1.  Sumar el `monto` a `montoPagado`.
+2.  Si el `montoPagado` alcanza o supera el `valor` total de la venta, el `estado` se actualizará automáticamente a **"Pagado"**.
+3.  Si el `montoPagado` es inferior al `valor`, el `estado` se mantendrá como **"Pendiente"**.
