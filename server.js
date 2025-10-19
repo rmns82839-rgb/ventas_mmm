@@ -99,6 +99,30 @@ app.post('/api/ventas', async (req, res) => {
     }
 });
 
+
+// 💥 AÑADIDO: DELETE /api/ventas/:id (Eliminar una venta específica)
+app.delete('/api/ventas/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await Venta.findByIdAndDelete(id);
+
+        if (!result) {
+            // Si no encuentra el ID, la venta ya no existe
+            return res.status(404).json({ message: 'Venta no encontrada.' });
+        }
+
+        res.status(204).send(); // 204 No Content para borrado exitoso
+    } catch (error) {
+        // Manejar errores de formato de ID (ej: CastError)
+        if (error.name === 'CastError') {
+             return res.status(400).json({ message: 'ID de venta inválido.' });
+        }
+        res.status(500).json({ message: 'Error al eliminar la venta', error: error.message });
+    }
+});
+// 💥 FIN AÑADIDO
+
+
 // POST /api/retiros (Registrar nuevo retiro)
 app.post('/api/retiros', async (req, res) => {
     try {
