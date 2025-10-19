@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Define el esquema para los Retiros de Caja
 const retiroSchema = new mongoose.Schema({
     cantidad: {
         type: Number,
