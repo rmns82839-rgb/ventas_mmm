@@ -23,7 +23,7 @@ mongoose.connect(MONGO_URI)
 
 const VentaSchema = new mongoose.Schema({
     nombre: { type: String, required: true }, // Vendedor/Integrante
-    cliente: { type: String, default: 'Anónimo' }, // NUEVO: Cliente/Comprador
+    cliente: { type: String, default: 'Anónimo' }, // Cliente/Comprador
     valor: { type: Number, required: true },
     fecha: { type: Date, default: Date.now },
     estado: { type: String, enum: ['Pagado', 'Pendiente', 'Cancelado'], default: 'Pagado' },
@@ -37,7 +37,6 @@ const RetiroSchema = new mongoose.Schema({
     fecha: { type: Date, default: Date.now }
 });
 
-// ESQUEMAS DE GESTIÓN DE GRUPOS E INTEGRANTES
 const GrupoSchema = new mongoose.Schema({
     nombreGrupo: { type: String, required: true, unique: true },
     fechaCreacion: { type: Date, default: Date.now }
@@ -81,14 +80,13 @@ app.get('/api/retiros', async (req, res) => {
 });
 
 
-// POST /api/ventas (Registrar nueva venta) - AHORA CAPTURA 'cliente'
+// POST /api/ventas (Registrar nueva venta)
 app.post('/api/ventas', async (req, res) => {
     try {
-        // nombre es el VENDEDOR/Integrante
         const { nombre, cliente, valor, estado, descripcion, producto } = req.body;
         
-        if (!nombre || !valor) {
-            return res.status(400).json({ message: 'Faltan campos obligatorios: nombre (vendedor) o valor.' });
+        if (!nombre || !valor || isNaN(valor) || valor <= 0) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios: nombre (vendedor) o valor (positivo).' });
         }
         
         const nuevaVenta = new Venta({ nombre, cliente, valor, estado, descripcion, producto });
@@ -99,13 +97,61 @@ app.post('/api/ventas', async (req, res) => {
     }
 });
 
+// 💥 AÑADIDO: PUT /api/ventas/:id (Actualizar una venta específica)
+app.put('/api/ventas/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedData = req.body;
+        
+        // Validar el valor si se está actualizando
+        if (updatedData.valor && (isNaN(updatedData.valor) || updatedData.valor <= 0)) {
+            return res.status(400).json({ message: 'El valor debe ser un número positivo.' });
+        }
+
+        // { new: true } devuelve el documento actualizado, { runValidators: true } ejecuta las validaciones del esquema
+        const ventaActualizada = await Venta.findByIdAndUpdate(id, updatedData, { new: true, runValidators: true });
+
+        if (!ventaActualizada) {
+            return res.status(404).json({ message: 'Venta no encontrada.' });
+        }
+
+        res.status(200).json(ventaActualizada);
+    } catch (error) {
+        if (error.name === 'CastError') {
+             return res.status(400).json({ message: 'ID de venta inválido o datos de actualización incorrectos.' });
+        }
+        res.status(500).json({ message: 'Error al actualizar la venta', error: error.message });
+    }
+});
+// 💥 FIN AÑADIDO
+
+// DELETE /api/ventas/:id (Eliminar una venta específica)
+app.delete('/api/ventas/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await Venta.findByIdAndDelete(id);
+
+        if (!result) {
+            return res.status(404).json({ message: 'Venta no encontrada.' });
+        }
+
+        res.status(204).send(); 
+    } catch (error) {
+        if (error.name === 'CastError') {
+             return res.status(400).json({ message: 'ID de venta inválido.' });
+        }
+        res.status(500).json({ message: 'Error al eliminar la venta', error: error.message });
+    }
+});
+
+
 // POST /api/retiros (Registrar nuevo retiro)
 app.post('/api/retiros', async (req, res) => {
     try {
         const { cantidad, descripcion } = req.body;
         
-        if (!cantidad || !descripcion) {
-            return res.status(400).json({ message: 'Faltan campos obligatorios: cantidad o descripción.' });
+        if (!cantidad || !descripcion || isNaN(cantidad) || cantidad <= 0) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios: cantidad (positiva) o descripción.' });
         }
 
         const nuevoRetiro = new Retiro({ cantidad, descripcion });
@@ -116,14 +162,14 @@ app.post('/api/retiros', async (req, res) => {
     }
 });
 
-// DELETE /api/datos-completos (Borrar todos los datos) - BORRA TODO, incluyendo GRUPOS/INTEGRANTES
+// DELETE /api/datos-completos (Borrar todos los datos) - BORRA TODO
 app.delete('/api/datos-completos', async (req, res) => {
     try {
         await Venta.deleteMany({});
         await Retiro.deleteMany({});
         await Grupo.deleteMany({});
         await Integrante.deleteMany({});
-        res.status(204).send(); // 204 No Content para borrado exitoso
+        res.status(204).send(); 
     } catch (error) {
         res.status(500).json({ message: 'Error al borrar todos los datos', error: error.message });
     }
@@ -155,7 +201,7 @@ app.post('/api/grupos', async (req, res) => {
         await nuevoGrupo.save();
         res.status(201).json(nuevoGrupo);
     } catch (error) {
-        if (error.code === 11000) { // Error de clave duplicada (nombreGrupo debe ser único)
+        if (error.code === 11000) { 
              return res.status(409).json({ message: 'El nombre del grupo ya existe.' });
         }
         res.status(500).json({ message: 'Error al crear el grupo', error: error.message });
@@ -180,7 +226,6 @@ app.post('/api/integrantes', async (req, res) => {
             return res.status(400).json({ message: 'Faltan campos obligatorios: nombre del vendedor o ID del grupo.' });
         }
         
-        // Verifica que el grupoId sea válido antes de crear el integrante
         const grupoExiste = await Grupo.findById(grupoId);
         if (!grupoExiste) {
              return res.status(404).json({ message: 'Grupo no encontrado. Verifica el grupoId.' });
