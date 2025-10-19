@@ -1,39 +1,122 @@
-// --- BUSCA Y MODIFICA LA LÓGICA DE CREAR VENTA (POST /api/ventas) ---
-// Asegúrate de que tu lógica POST ahora calcule el montoPagado inicial:
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 
-/*
+const app = express();
+const PORT = process.env.PORT || 3000;
+// CRÍTICO: Asegúrate de tener la variable MONGO_URI definida en tu .env
+const MONGO_URI = process.env.MONGO_URI;
+
+// Middleware
+app.use(cors()); 
+app.use(express.json()); 
+
+// Conexión a MongoDB
+mongoose.connect(MONGO_URI)
+    .then(() => console.log('Conectado a MongoDB Atlas'))
+    .catch(err => console.error('Error de conexión a MongoDB:', err));
+
+// =======================================================
+// === 1. ESQUEMAS: Venta, Retiro, Grupo, Integrante     ===
+// =======================================================
+
+const VentaSchema = new mongoose.Schema({
+    nombre: { type: String, required: true }, // Vendedor/Integrante
+    cliente: { type: String, default: 'Anónimo' }, // Cliente/Comprador
+    valor: { type: Number, required: true },
+    fecha: { type: Date, default: Date.now },
+    estado: { type: String, enum: ['Pagado', 'Pendiente', 'Cancelado'], default: 'Pagado' },
+    descripcion: { type: String },
+    producto: { type: String },
+    // NUEVO CAMPO: Rastrea la cantidad de dinero pagada de la venta total
+    montoPagado: { type: Number, default: 0 } 
+});
+
+const RetiroSchema = new mongoose.Schema({
+    cantidad: { type: Number, required: true },
+    descripcion: { type: String, required: true },
+    fecha: { type: Date, default: Date.now }
+});
+
+// ESQUEMAS DE GESTIÓN DE GRUPOS E INTEGRANTES
+const GrupoSchema = new mongoose.Schema({
+    nombreGrupo: { type: String, required: true, unique: true },
+    fechaCreacion: { type: Date, default: Date.now }
+});
+
+const IntegranteSchema = new mongoose.Schema({
+    nombre: { type: String, required: true }, // Nombre del vendedor
+    grupoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Grupo', required: true },
+    activo: { type: Boolean, default: true }
+});
+
+
+const Venta = mongoose.model('Venta', VentaSchema);
+const Retiro = mongoose.model('Retiro', RetiroSchema);
+const Grupo = mongoose.model('Grupo', GrupoSchema); 
+const Integrante = mongoose.model('Integrante', IntegranteSchema); 
+
+
+// ===================================
+// === 2. RUTAS DE VENTA Y RETIRO    ===
+// ===================================
+
+// GET /api/ventas (Obtener todo)
+app.get('/api/ventas', async (req, res) => {
+    try {
+        const ventas = await Venta.find().sort({ fecha: -1 });
+        res.status(200).json(ventas);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener ventas', error: error.message });
+    }
+});
+
+// GET /api/retiros (Obtener todo)
+app.get('/api/retiros', async (req, res) => {
+    try {
+        const retiros = await Retiro.find().sort({ fecha: -1 });
+        res.status(200).json(retiros);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener retiros', error: error.message });
+    }
+});
+
+
+// POST /api/ventas (Registrar nueva venta) - MODIFICADO para inicializar montoPagado
 app.post('/api/ventas', async (req, res) => {
-    try {
-        const { nombre, cliente, valor, estado, descripcion, producto } = req.body;
+    try {
+        // nombre es el VENDEDOR/Integrante
+        const { nombre, cliente, valor, estado, descripcion, producto } = req.body;
+        
+        if (!nombre || !valor) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios: nombre (vendedor) o valor.' });
+        }
         
-        let montoPagado = 0;
-        // Si el estado inicial es 'Pagado', el monto pagado es igual al valor total.
+        let montoPagadoInicial = 0;
+        // Si el estado es Pagado, se considera que el monto inicial pagado es el valor total
         if (estado === 'Pagado') {
-            montoPagado = valor;
+            montoPagadoInicial = valor;
         }
 
-        const newVenta = new Venta({
-            nombre,
-            cliente,
-            valor,
-            estado,
-            descripcion,
+        const nuevaVenta = new Venta({ 
+            nombre, 
+            cliente, 
+            valor, 
+            estado, 
+            descripcion, 
             producto,
-            fecha: new Date(),
-            montoPagado // <--- Asegúrate de que esta línea esté presente
+            montoPagado: montoPagadoInicial // Se añade el campo aquí
         });
-
-        await newVenta.save();
-        res.status(201).json(newVenta);
-    } catch (error) {
-        res.status(500).json({ message: 'Error al crear la venta', error: error.message });
-    }
+        await nuevaVenta.save();
+        res.status(201).json(nuevaVenta);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al registrar la venta', error: error.message });
+    }
 });
-*/
 
-// --- AÑADE ESTA NUEVA LÓGICA DE RUTA (PUT /api/ventas/pago/:id) ---
-// Colócala junto a tus otras rutas de API, por ejemplo, después del POST de Ventas.
 
+// PUT /api/ventas/pago/:id (Registrar pago parcial o total) - RUTA NUEVA
 app.put('/api/ventas/pago/:id', async (req, res) => {
     const { id } = req.params;
     const { monto } = req.body; // Monto a pagar en esta transacción
@@ -49,12 +132,11 @@ app.put('/api/ventas/pago/:id', async (req, res) => {
             return res.status(404).json({ message: 'Venta no encontrada.' });
         }
         
-        // No permitir pagos a ventas canceladas
+        // Bloquear pagos a ventas canceladas o ya pagadas
         if (venta.estado === 'Cancelado') {
              return res.status(400).json({ message: 'No se puede registrar pagos en ventas Canceladas.' });
         }
-
-        // Calcular la deuda restante
+        
         const deudaRestante = venta.valor - venta.montoPagado;
         
         if (deudaRestante <= 0.01) { // Pequeño margen para coma flotante
@@ -63,10 +145,9 @@ app.put('/api/ventas/pago/:id', async (req, res) => {
 
         let montoAplicado = monto;
         
+        // Ajustar el monto si el pago excede la deuda
         if (monto > deudaRestante) {
-            // Si el pago es mayor a la deuda, ajustamos el monto aplicado.
             montoAplicado = deudaRestante;
-            console.log(`Pago ajustado: se recibió $${monto.toFixed(2)}, pero solo se aplicó el restante de $${deudaRestante.toFixed(2)}.`);
         }
 
         // Aplicar el pago
@@ -77,7 +158,7 @@ app.put('/api/ventas/pago/:id', async (req, res) => {
             venta.estado = 'Pagado';
             venta.montoPagado = venta.valor; // Asegura el valor exacto
         } else {
-             // Si aún queda deuda, el estado debe ser 'Pendiente'
+             // Si aún queda deuda, el estado se mantiene o se establece en 'Pendiente'
              venta.estado = 'Pendiente'; 
         }
         
@@ -87,4 +168,117 @@ app.put('/api/ventas/pago/:id', async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Error al registrar el pago', error: error.message });
     }
+});
+
+
+// POST /api/retiros (Registrar nuevo retiro)
+app.post('/api/retiros', async (req, res) => {
+    try {
+        const { cantidad, descripcion } = req.body;
+        
+        if (!cantidad || !descripcion) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios: cantidad o descripción.' });
+        }
+
+        const nuevoRetiro = new Retiro({ cantidad, descripcion });
+        await nuevoRetiro.save();
+        res.status(201).json(nuevoRetiro);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al registrar el retiro', error: error.message });
+    }
+});
+
+// DELETE /api/datos-completos (Borrar todos los datos) - BORRA TODO, incluyendo GRUPOS/INTEGRANTES
+app.delete('/api/datos-completos', async (req, res) => {
+    try {
+        await Venta.deleteMany({});
+        await Retiro.deleteMany({});
+        await Grupo.deleteMany({});
+        await Integrante.deleteMany({});
+        res.status(204).send(); // 204 No Content para borrado exitoso
+    } catch (error) {
+        res.status(500).json({ message: 'Error al borrar todos los datos', error: error.message });
+    }
+});
+
+
+// ==========================================
+// === 3. RUTAS DE GRUPOS E INTEGRANTES     ===
+// ==========================================
+
+// GET /api/grupos - Obtiene todos los grupos
+app.get('/api/grupos', async (req, res) => {
+    try {
+        const grupos = await Grupo.find({});
+        res.status(200).json(grupos);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener grupos', error: error.message });
+    }
+});
+
+// POST /api/grupos - Crea un nuevo grupo
+app.post('/api/grupos', async (req, res) => {
+    try {
+        const { nombreGrupo } = req.body;
+        if (!nombreGrupo) {
+            return res.status(400).json({ message: 'Falta el nombre del grupo.' });
+        }
+        const nuevoGrupo = new Grupo({ nombreGrupo });
+        await nuevoGrupo.save();
+        res.status(201).json(nuevoGrupo);
+    } catch (error) {
+        if (error.code === 11000) { // Error de clave duplicada (nombreGrupo debe ser único)
+             return res.status(409).json({ message: 'El nombre del grupo ya existe.' });
+        }
+        res.status(500).json({ message: 'Error al crear el grupo', error: error.message });
+    }
+});
+
+// GET /api/integrantes - Obtiene todos los integrantes (vendedores)
+app.get('/api/integrantes', async (req, res) => {
+    try {
+        const integrantes = await Integrante.find({});
+        res.status(200).json(integrantes);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener integrantes', error: error.message });
+    }
+});
+
+// POST /api/integrantes - Agrega un nuevo integrante a un grupo
+app.post('/api/integrantes', async (req, res) => {
+    try {
+        const { nombre, grupoId } = req.body;
+        if (!nombre || !grupoId) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios: nombre del vendedor o ID del grupo.' });
+        }
+        
+        // Verifica que el grupoId sea válido antes de crear el integrante
+        const grupoExiste = await Grupo.findById(grupoId);
+        if (!grupoExiste) {
+             return res.status(404).json({ message: 'Grupo no encontrado. Verifica el grupoId.' });
+        }
+
+        const nuevoIntegrante = new Integrante({ nombre, grupoId });
+        await nuevoIntegrante.save();
+        res.status(201).json(nuevoIntegrante);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al agregar el integrante', error: error.message });
+    }
+});
+
+
+// Ruta por defecto
+app.get('/', (req, res) => {
+    res.send('Control de Ventas API está activo.');
+});
+
+// Manejador de error 404
+app.use((req, res) => {
+    res.status(404).send('Error 404: Ruta de API no encontrada.');
+});
+
+
+// Iniciar el servidor
+app.listen(PORT, () => {
+    console.log(`Servidor Express escuchando en el puerto ${PORT}`);
 });
