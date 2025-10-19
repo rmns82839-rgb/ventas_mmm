@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Ventas</title>
+    <title>Control de Ventas y Grupos</title>
+    <!-- Incluye aquí tus estilos CSS -->
     <style>
         /* Estilos base */
         body {
@@ -131,7 +132,7 @@
         .print-button:hover {
             background-color: #44607a;
         }
-        /* MODAL CSS - NUEVO ESTILO */
+        /* MODAL CSS */
         .modal {
             display: none; 
             position: fixed; 
@@ -208,9 +209,10 @@
             </div>
         </div>
 
+        <!-- Sección de Filtros (Omitidos, no funcionales aún) -->
         <div class="flex-container" style="gap: 10px;">
             <div class="form-group">
-                <label for="filtroNombreInput">Filtrar por Integrante</label>
+                <label for="filtroNombreInput">Filtrar por Vendedor</label>
                 <input type="text" id="filtroNombreInput" placeholder="Nombre...">
             </div>
             <div class="form-group">
@@ -227,14 +229,20 @@
         <button id="mostrarRegistroVentasBtn" style="width: 100%; margin-bottom: 15px; background-color: #3498db;">Mostrar/Ocultar Registro de Movimientos</button>
         
         <div id="registroVentasContainer" style="display: none;">
-            </div>
+            <!-- Contenido del registro de ventas -->
+        </div>
 
+        <!-- Secciones de Acción y Botones -->
         <div class="flex-container" style="grid-template-columns: 1fr 1fr 1fr;">
+            <!-- Botón Exportar -->
             <button id="exportarCsvBtn" onclick="exportarCSV()" class="export-button">Exportar CSV</button> 
+            <!-- Botón de Imprimir -->
             <button id="imprimirBtn" onclick="imprimirRegistro()" class="print-button">Imprimir Historial</button>
+            <!-- Botón Borrar/Administrar: Llama a abrirModalBorrado() -->
             <button id="borrarDatosBtn" onclick="abrirModalBorrado()" class="admin-button">Borrar/Administrar Datos</button>
         </div>
         
+        <!-- Sección de Retiro de Caja -->
         <div class="form-group">
             <label for="retiroCantidadInput">Retiro de Caja (Cantidad)</label>
             <div class="flex-container" style="margin-bottom: 0;">
@@ -244,30 +252,53 @@
             </div>
         </div>
 
+        <!-- Sección de Gestión de Grupos e Integrantes -->
         <div class="integrantes-list">
-            <label style="margin-bottom: 15px; color: #f1c40f;">Gestión de Integrantes</label>
-            <div class="form-group">
-                <div class="flex-container" style="margin-bottom: 0;">
-                    <input type="text" id="integranteNombreInput" placeholder="Nombre del nuevo integrante">
-                    <button onclick="agregarIntegrante()" style="background-color: #5c6874; margin-top: 0;">Agregar Integrante</button>
+            <label style="margin-bottom: 15px; color: #f1c40f;">Gestión de Grupos y Vendedores</label>
+            
+            <div class="flex-container" style="grid-template-columns: 1fr 1fr;">
+                <!-- Crear Nuevo Grupo -->
+                <div class="form-group">
+                    <input type="text" id="grupoNombreInput" placeholder="Nombre del nuevo Grupo (Ej: Turno Mañana)">
+                    <button onclick="agregarGrupo()" style="background-color: #2980b9; margin-top: 0;">Crear Grupo</button>
+                </div>
+
+                <!-- Añadir Integrante a Grupo -->
+                <div class="form-group">
+                    <input type="text" id="integranteNombreInput" placeholder="Nombre del Vendedor">
+                    <select id="grupoSelectIntegrantes" style="margin-top: 5px;">
+                        <option value="">Selecciona Grupo</option>
+                    </select>
+                    <button onclick="agregarIntegrante()" style="background-color: #5c6874; margin-top: 5px;">Añadir Vendedor</button>
                 </div>
             </div>
-            <div id="integrantesContainer">
-                </div>
+
+            <div id="integrantesContainer" style="margin-top: 10px; font-size: 0.9em;">
+                <!-- Lista de Grupos y Vendedores se renderizan aquí -->
+                <p style="color: #bdc3c7;">Cargando grupos y vendedores...</p>
+            </div>
         </div>
 
 
+        <!-- Formulario de Venta -->
         <h2 style="color: #bdc3c7; text-align: center; margin-top: 25px;">Registrar Nueva Venta</h2>
         <div class="flex-container">
              <div class="form-group">
-                <label for="integranteSelect">Integrante</label>
+                <label for="integranteSelect">Vendedor (Integrante)</label>
                 <select id="integranteSelect">
-                    </select>
+                    <!-- Opciones de vendedores se llenan con JS -->
+                </select>
+            </div>
+            <!-- Campo NUEVO: Nombre del Cliente/Comprador -->
+            <div class="form-group">
+                <label for="clienteInput">Cliente/Comprador (opcional)</label>
+                <input type="text" id="clienteInput" placeholder="Nombre del cliente">
             </div>
             <div class="form-group">
                 <label for="productoInput">Producto</label>
                 <select id="productoInput">
-                    </select>
+                    <!-- Opciones de productos se llenan con JS -->
+                </select>
             </div>
             <div class="form-group">
                 <label for="tipoValorSelect">Tipo de Registro</label>
@@ -306,6 +337,7 @@
 
     </div>
 
+    <!-- Modal para Confirmar Contraseña (Borrar Datos) -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="document.getElementById('passwordModal').style.display='none'">&times;</span>
@@ -313,6 +345,7 @@
             <p>Esta acción es **irreversible** y eliminará **TODAS** las Ventas y Retiros de la base de datos.</p>
             <label for="passwordInput">Introduce la clave de seguridad:</label>
             <input type="password" id="passwordInput" placeholder="Clave de seguridad">
+            <!-- El botón llama a la función de borrado -->
             <button id="confirmDeleteBtn" onclick="borrarTodosLosDatos()">Confirmar Borrado</button>
         </div>
     </div>
@@ -322,14 +355,25 @@
         const API_BASE_URL = 'https://ventas-mmm.onrender.com'; 
 
         // --- Datos de Configuración Local ---
+
+        // =========================================================================
+        // === AQUÍ PUEDES CAMBIAR LOS NOMBRES y PRECIOS DE TUS PRODUCTOS (VALOR) ===
+        // =========================================================================
         const ventasPorDefecto = [
-            { nombre: 'Producto A', valor: 3000 },
-            { nombre: 'Producto B', valor: 6000 },
-            { nombre: 'Producto C', valor: 9000 },
+            { nombre: 'Producto A', valor: 12.00 }, 
+            { nombre: 'Producto B', valor: 25.00 },
+            { nombre: 'Producto C', valor: 6.50 },
+            // Puedes añadir más productos aquí:
+            // { nombre: 'Producto D', valor: 15.75 }, 
         ];
+        // =========================================================================
+
         // IMPORTANTE: Esta es la CLAVE de seguridad para borrar. CÁMBIALA si quieres más seguridad.
         const CLAVE_SEGURIDAD = "1234"; 
-        let integrantes = ['Ivan']; 
+        
+        // Almacenamiento local de la data de Grupos e Integrantes para la UI
+        let grupos = [];
+        let integrantes = []; 
 
         // --- Funciones de Lógica y UI (Ajustadas para la API) ---
 
@@ -346,7 +390,9 @@
                 const response = await fetch(url, options);
                 
                 if (response.ok) {
-                    return method === 'DELETE' ? true : response.json(); 
+                    // Maneja respuestas vacías (como 204 No Content)
+                    if (response.status === 204 || method === 'DELETE') return true; 
+                    return response.json(); 
                 } else {
                     const errorText = await response.text();
                     let errorMessage = 'Error desconocido del servidor.';
@@ -357,23 +403,30 @@
                         errorMessage = `Error ${response.status}: ${errorText || 'Error de red o servidor'}`;
                     }
                     mostrarMensaje(`Error ${method} ${endpoint}: ${errorMessage}`, 'error');
-                    return endpoint.includes('/ventas') || endpoint.includes('/retiros') ? [] : null; 
+                    // Devuelve array vacío o null según el endpoint
+                    if (endpoint.includes('/ventas') || endpoint.includes('/retiros')) return []; 
+                    if (endpoint.includes('/integrantes') || endpoint.includes('/grupos')) return [];
+                    return null; 
                 }
             } catch (error) {
                 console.error('Fallo de conexión:', error);
                 mostrarMensaje(`Fallo de conexión: El servidor (${API_BASE_URL}) no está disponible o la URL es incorrecta.`, 'error');
-                return endpoint.includes('/ventas') || endpoint.includes('/retiros') ? [] : null; 
+                return endpoint.includes('/ventas') || endpoint.includes('/retiros') || endpoint.includes('/integrantes') || endpoint.includes('/grupos') ? [] : null;
             }
         }
         
         function mostrarMensaje(mensaje, tipo) {
             console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+            // Usamos un simple alert por simplicidad, aunque se recomienda un modal personalizado
             alert(mensaje); 
         }
 
         async function actualizarUI() {
              const ventas = await fetchAPI('/api/ventas', 'GET');
              const retiros = await fetchAPI('/api/retiros', 'GET'); 
+             
+             // Cargar datos de Grupos e Integrantes
+             await cargarGruposEIntegrantes(); 
 
              if (!Array.isArray(ventas) || !Array.isArray(retiros)) { 
                  console.log("No se pudieron obtener datos del backend.");
@@ -388,8 +441,110 @@
              
              renderRegistroVentas(ventas, retiros);
         }
+
+        // --- FUNCIONES DE GRUPOS E INTEGRANTES (NUEVO) ---
         
-        // --- FUNCIÓN DE BORRADO DE DATOS (NUEVA LÓGICA) ---
+        async function cargarGruposEIntegrantes() {
+            const gruposData = await fetchAPI('/api/grupos', 'GET');
+            const integrantesData = await fetchAPI('/api/integrantes', 'GET');
+
+            if (Array.isArray(gruposData)) grupos = gruposData;
+            if (Array.isArray(integrantesData)) integrantes = integrantesData;
+
+            renderIntegrantes();
+            renderGruposSelects();
+        }
+
+        function renderGruposSelects() {
+            const selectIntegrantes = document.getElementById('grupoSelectIntegrantes');
+            const selectVendedor = document.getElementById('integranteSelect');
+
+            // 1. Select para Añadir Integrantes a Grupos
+            selectIntegrantes.innerHTML = '<option value="">Selecciona Grupo</option>';
+            grupos.forEach(g => {
+                const option = document.createElement('option');
+                option.value = g._id;
+                option.textContent = g.nombreGrupo;
+                selectIntegrantes.appendChild(option);
+            });
+
+            // 2. Select para Registrar Venta (Vendedores)
+            selectVendedor.innerHTML = '';
+            integrantes.forEach(i => {
+                const grupoNombre = grupos.find(g => g._id === i.grupoId)?.nombreGrupo || 'Sin Grupo';
+                const option = document.createElement('option');
+                option.value = i.nombre;
+                option.textContent = `${i.nombre} (${grupoNombre})`;
+                selectVendedor.appendChild(option);
+            });
+            if (integrantes.length === 0) {
+                 selectVendedor.innerHTML = '<option value="">(Agregue un Vendedor)</option>';
+            }
+        }
+
+        function renderIntegrantes() {
+            const container = document.getElementById('integrantesContainer');
+            if (grupos.length === 0) {
+                container.innerHTML = '<p style="color: #f39c12;">No hay grupos registrados. Por favor, crea uno.</p>';
+                return;
+            }
+
+            let html = '';
+            grupos.forEach(g => {
+                const vendedores = integrantes.filter(i => i.grupoId === g._id);
+                html += `<div style="margin-bottom: 15px; padding: 10px; border: 1px solid #2ecc71; border-radius: 5px;">`;
+                html += `<strong style="color: #2ecc71;">Grupo: ${g.nombreGrupo}</strong>`;
+                
+                if (vendedores.length > 0) {
+                    const listaNombres = vendedores.map(i => i.nombre).join(', ');
+                    html += `<p style="margin: 5px 0 0 0;">Vendedores: ${listaNombres}</p>`;
+                } else {
+                    html += `<p style="margin: 5px 0 0 0; color: #e74c3c;">No hay vendedores en este grupo.</p>`;
+                }
+                html += `</div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function agregarGrupo() {
+            const nombre = document.getElementById('grupoNombreInput').value.trim();
+
+            if (!nombre) {
+                mostrarMensaje('El nombre del grupo no puede estar vacío.', 'error');
+                return;
+            }
+
+            const grupoData = { nombreGrupo: nombre };
+            const nuevoGrupo = await fetchAPI('/api/grupos', 'POST', grupoData);
+
+            if (nuevoGrupo) {
+                mostrarMensaje(`Grupo "${nombre}" creado con éxito.`, 'success');
+                document.getElementById('grupoNombreInput').value = '';
+                cargarGruposEIntegrantes(); 
+            }
+        }
+        
+        async function agregarIntegrante() {
+            const nombre = document.getElementById('integranteNombreInput').value.trim();
+            const grupoId = document.getElementById('grupoSelectIntegrantes').value;
+
+            if (!nombre || !grupoId) {
+                mostrarMensaje('Debes ingresar el nombre del vendedor y seleccionar un grupo.', 'error');
+                return;
+            }
+
+            const integranteData = { nombre: nombre, grupoId: grupoId };
+            const nuevoIntegrante = await fetchAPI('/api/integrantes', 'POST', integranteData);
+
+            if (nuevoIntegrante) {
+                mostrarMensaje(`Vendedor "${nombre}" añadido al grupo con éxito.`, 'success');
+                document.getElementById('integranteNombreInput').value = '';
+                cargarGruposEIntegrantes(); 
+            }
+        }
+
+
+        // --- FUNCIONES DE VENTA Y RETIRO ---
 
         function abrirModalBorrado() {
             document.getElementById('passwordInput').value = ''; // Limpiar campo
@@ -411,7 +566,7 @@
             
             mostrarMensaje('Intentando borrar todos los datos de MongoDB...', 'info');
 
-            // Llamada al nuevo endpoint DELETE
+            // Llamada al endpoint DELETE (Borrar Ventas, Retiros, Grupos e Integrantes)
             const resultado = await fetchAPI('/api/datos-completos', 'DELETE');
 
             if (resultado === true) {
@@ -421,9 +576,6 @@
                  mostrarMensaje('❌ Error al intentar borrar los datos del servidor.', 'error');
             }
         }
-
-
-        // --- OTRAS FUNCIONALIDADES (Existentes) ---
         
         function calcularTotales(ventas, retiros) {
             const totalVentasPagadas = ventas
@@ -444,7 +596,8 @@
             const movimientos = [
                 ...ventas.map(v => ({
                     tipo: 'Venta', 
-                    descripcion: v.descripcion || `${v.producto} (${v.estado})`, 
+                    // Descripción mejorada
+                    descripcion: `Vendedor: ${v.nombre} | Cliente: ${v.cliente || 'Anónimo'} | ${v.descripcion || v.producto}`, 
                     valor: v.valor,
                     fecha: new Date(v.fecha),
                     estado: v.estado
@@ -477,9 +630,12 @@
             container.innerHTML = html;
         }
         
-        // Las funciones agregarVenta y agregarRetiroCaja son las mismas que antes...
         async function agregarVenta() {
-            const integrante = document.getElementById('integranteSelect').value;
+            // Se usa vendedor (integrante)
+            const vendedor = document.getElementById('integranteSelect').value;
+            // NUEVO: Captura el nombre del cliente
+            const cliente = document.getElementById('clienteInput').value || 'Anónimo'; 
+            
             const productoSelect = document.getElementById('productoInput');
             const productoNombre = productoSelect.options[productoSelect.selectedIndex].text; 
             const tipoValor = document.getElementById('tipoValorSelect').value;
@@ -500,13 +656,14 @@
                 descripcion = `Venta de ${cantidad} x ${productoElegido.nombre}`;
             }
 
-            if (!integrante || !valor || valor <= 0) {
-                mostrarMensaje('Por favor, completa todos los campos requeridos (Integrante y Valor > 0).', 'error');
+            if (!vendedor || !valor || valor <= 0) {
+                mostrarMensaje('Por favor, completa todos los campos requeridos (Vendedor y Valor > 0).', 'error');
                 return;
             }
 
             const ventaData = {
-                nombre: integrante, 
+                nombre: vendedor, // Nombre del VENDEDOR/Integrante
+                cliente: cliente,  // Nombre del CLIENTE/Comprador
                 valor: valor,
                 fecha: new Date().toISOString(),
                 estado: estado,
@@ -518,6 +675,11 @@
 
             if (nuevaVenta) {
                 mostrarMensaje('Venta registrada con éxito.', 'success');
+                // Limpiar campos
+                document.getElementById('clienteInput').value = ''; 
+                document.getElementById('valorManualInput').value = '';
+                document.getElementById('descripcionManualInput').value = '';
+                document.getElementById('cantidadInput').value = '1';
                 actualizarUI(); 
             }
         }
@@ -552,8 +714,8 @@
                 return;
             }
 
-            // Encabezados del CSV
-            let csvContent = "Tipo,Fecha,Valor,Estado,Nombre/Integrante,Descripcion,Producto\n";
+            // Encabezados del CSV - Ahora incluye Vendedor y Cliente
+            let csvContent = "Tipo,Fecha,Valor,Estado,Vendedor/Integrante,Cliente,Descripcion,Producto\n";
 
             // Procesar Ventas
             ventas.forEach(v => {
@@ -562,7 +724,8 @@
                     new Date(v.fecha).toLocaleString(),
                     v.valor.toFixed(2),
                     v.estado,
-                    v.nombre,
+                    v.nombre, // Vendedor
+                    v.cliente || 'Anónimo', // Cliente (NUEVO)
                     `"${(v.descripcion || '').replace(/"/g, '""')}"`, // Escapar comillas
                     v.producto || ''
                 ].join(",");
@@ -576,7 +739,8 @@
                     new Date(r.fecha).toLocaleString(),
                     (-r.cantidad).toFixed(2), // Negativo para los retiros
                     "Completado",
-                    "", // Sin nombre de integrante
+                    "", // Sin vendedor
+                    "", // Sin cliente
                     `"${r.descripcion.replace(/"/g, '""')}"`, // Escapar comillas
                     ""
                 ].join(",");
@@ -599,6 +763,7 @@
         }
 
         function imprimirRegistro() {
+            // ... (Función de impresión sin cambios) ...
             const printWindow = window.open('', '', 'height=600,width=800');
             
             const tableHTML = document.getElementById('registroVentasContainer').innerHTML;
@@ -628,23 +793,6 @@
             printWindow.print();
         }
         
-        function renderIntegrantes() {
-            const select = document.getElementById('integranteSelect');
-            select.innerHTML = '';
-            integrantes.forEach(nombre => {
-                const option = document.createElement('option');
-                option.value = nombre;
-                option.textContent = nombre;
-                select.appendChild(option);
-            });
-            if (integrantes.length === 0) {
-                 select.innerHTML = '<option value="">(Agregue un integrante)</option>';
-            }
-            
-            const container = document.getElementById('integrantesContainer');
-            container.innerHTML = `<div>Integrante por defecto: **${integrantes[0]}**</div><div style="font-size: 0.8em; color: #7f8c8d;">(La gestión completa de integrantes está pendiente)</div>`;
-        }
-        
         function inicializarProductos() {
              const productoInput = document.getElementById('productoInput');
              productoInput.innerHTML = '';
@@ -656,10 +804,6 @@
              });
         }
         
-        function agregarIntegrante() {
-            mostrarMensaje("Función de Integrante: Necesita un endpoint POST /api/integrantes en el Backend.", 'info');
-        }
-
         // --- EVENTOS DE INICIALIZACIÓN ---
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -692,8 +836,7 @@
 
             // Inicialización final
             inicializarProductos();
-            renderIntegrantes();
-            actualizarUI(); // Carga de datos reales
+            actualizarUI(); // Carga de datos reales y de vendedores
         });
     </script>
 </body>
