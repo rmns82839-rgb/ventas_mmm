@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Ventas</title>
     <style>
+        /* Estilos base */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -96,6 +97,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
         }
         #registroVentasContainer th, #registroVentasContainer td {
             padding: 10px;
@@ -109,7 +111,70 @@
         #registroVentasContainer tr:hover {
             background-color: #44607a;
         }
-        
+        /* Estilos para los botones que antes eran blancos y no se veían */
+        .admin-button {
+            background-color: #e74c3c; /* ROJO para advertencia de borrar */
+        }
+        .admin-button:hover {
+            background-color: #c0392b;
+        }
+        .export-button {
+            background-color: #27ae60; /* Verde para exportar */
+        }
+        .export-button:hover {
+            background-color: #2ecc71;
+        }
+        .print-button {
+            background-color: #34495e; /* Oscuro para imprimir */
+            border: 1px solid #7f8c8d;
+        }
+        .print-button:hover {
+            background-color: #44607a;
+        }
+        /* MODAL CSS - NUEVO ESTILO */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 20; 
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.7); 
+        }
+        .modal-content {
+            background-color: #34495e;
+            margin: 15% auto; 
+            padding: 30px;
+            border: 1px solid #888;
+            width: 80%; 
+            max-width: 400px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #ecf0f1;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #passwordInput {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        #confirmDeleteBtn {
+            background-color: #e74c3c;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -159,14 +224,15 @@
             </div>
         </div>
         
-        <button id="mostrarRegistroVentasBtn" style="width: 100%; margin-bottom: 15px; background-color: #3498db;">Mostrar/Ocultar Registro de Ventas</button>
+        <button id="mostrarRegistroVentasBtn" style="width: 100%; margin-bottom: 15px; background-color: #3498db;">Mostrar/Ocultar Registro de Movimientos</button>
         
         <div id="registroVentasContainer" style="display: none;">
             </div>
 
-        <div class="flex-container" style="grid-template-columns: 1fr 1fr;">
-            <button id="exportarCsvBtn" style="width: 100%;">Exportar CSV</button>
-            <button id="borrarDatosBtn" style="width: 100%;">Borrar Todos los Datos</button>
+        <div class="flex-container" style="grid-template-columns: 1fr 1fr 1fr;">
+            <button id="exportarCsvBtn" onclick="exportarCSV()" class="export-button">Exportar CSV</button> 
+            <button id="imprimirBtn" onclick="imprimirRegistro()" class="print-button">Imprimir Historial</button>
+            <button id="borrarDatosBtn" onclick="abrirModalBorrado()" class="admin-button">Borrar/Administrar Datos</button>
         </div>
         
         <div class="form-group">
@@ -183,7 +249,7 @@
             <div class="form-group">
                 <div class="flex-container" style="margin-bottom: 0;">
                     <input type="text" id="integranteNombreInput" placeholder="Nombre del nuevo integrante">
-                    <button onclick="agregarIntegrante()" style="background-color: #2c3e50; margin-top: 0;">Agregar Integrante</button>
+                    <button onclick="agregarIntegrante()" style="background-color: #5c6874; margin-top: 0;">Agregar Integrante</button>
                 </div>
             </div>
             <div id="integrantesContainer">
@@ -241,7 +307,15 @@
     </div>
 
     <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('passwordModal').style.display='none'">&times;</span>
+            <h3 style="color: #e74c3c;">⚠️ Confirmación de Borrado de Datos</h3>
+            <p>Esta acción es **irreversible** y eliminará **TODAS** las Ventas y Retiros de la base de datos.</p>
+            <label for="passwordInput">Introduce la clave de seguridad:</label>
+            <input type="password" id="passwordInput" placeholder="Clave de seguridad">
+            <button id="confirmDeleteBtn" onclick="borrarTodosLosDatos()">Confirmar Borrado</button>
         </div>
+    </div>
     
     <script>
         // CRÍTICO: ¡DEBES PEGAR AQUÍ LA URL REAL DE TU WEB SERVICE DE RENDER!
@@ -253,7 +327,8 @@
             { nombre: 'Producto B', valor: 25.00 },
             { nombre: 'Producto C', valor: 5.00 },
         ];
-        const claveSeguridad = "1234"; 
+        // IMPORTANTE: Esta es la CLAVE de seguridad para borrar. CÁMBIALA si quieres más seguridad.
+        const CLAVE_SEGURIDAD = "1234"; 
         let integrantes = ['Ivan']; 
 
         // --- Funciones de Lógica y UI (Ajustadas para la API) ---
@@ -282,13 +357,11 @@
                         errorMessage = `Error ${response.status}: ${errorText || 'Error de red o servidor'}`;
                     }
                     mostrarMensaje(`Error ${method} ${endpoint}: ${errorMessage}`, 'error');
-                    // Si falla, retornamos un array vacío para que no rompa el renderizado
                     return endpoint.includes('/ventas') || endpoint.includes('/retiros') ? [] : null; 
                 }
             } catch (error) {
                 console.error('Fallo de conexión:', error);
                 mostrarMensaje(`Fallo de conexión: El servidor (${API_BASE_URL}) no está disponible o la URL es incorrecta.`, 'error');
-                // Si falla la conexión, retornamos un array vacío
                 return endpoint.includes('/ventas') || endpoint.includes('/retiros') ? [] : null; 
             }
         }
@@ -298,8 +371,113 @@
             alert(mensaje); 
         }
 
-        // --- Lógica de la Venta (Utiliza el endpoint POST /api/ventas) ---
+        async function actualizarUI() {
+             const ventas = await fetchAPI('/api/ventas', 'GET');
+             const retiros = await fetchAPI('/api/retiros', 'GET'); 
+
+             if (!Array.isArray(ventas) || !Array.isArray(retiros)) { 
+                 console.log("No se pudieron obtener datos del backend.");
+                 return; 
+             }
+
+             const { totalCaja, totalRetiros, totalVentasNetas } = calcularTotales(ventas, retiros);
+
+             document.getElementById('totalCaja').textContent = `$${totalCaja.toFixed(2)}`;
+             document.getElementById('totalRetiros').textContent = `$${totalRetiros.toFixed(2)}`;
+             document.getElementById('totalVentasNetas').textContent = `$${totalVentasNetas.toFixed(2)}`;
+             
+             renderRegistroVentas(ventas, retiros);
+        }
         
+        // --- FUNCIÓN DE BORRADO DE DATOS (NUEVA LÓGICA) ---
+
+        function abrirModalBorrado() {
+            document.getElementById('passwordInput').value = ''; // Limpiar campo
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+
+        async function borrarTodosLosDatos() {
+            const passwordInput = document.getElementById('passwordInput');
+            const claveIngresada = passwordInput.value;
+
+            if (claveIngresada !== CLAVE_SEGURIDAD) {
+                mostrarMensaje('Clave de seguridad incorrecta. Los datos NO han sido borrados.', 'error');
+                passwordInput.value = '';
+                return;
+            }
+
+            // Ocultar el modal inmediatamente
+            document.getElementById('passwordModal').style.display = 'none';
+            
+            mostrarMensaje('Intentando borrar todos los datos de MongoDB...', 'info');
+
+            // Llamada al nuevo endpoint DELETE
+            const resultado = await fetchAPI('/api/datos-completos', 'DELETE');
+
+            if (resultado === true) {
+                mostrarMensaje('✅ ¡Borrado Exitoso! Todos los datos han sido eliminados de la base de datos.', 'success');
+                actualizarUI(); // Recarga la UI para mostrar 0.00
+            } else {
+                 mostrarMensaje('❌ Error al intentar borrar los datos del servidor.', 'error');
+            }
+        }
+
+
+        // --- OTRAS FUNCIONALIDADES (Existentes) ---
+        
+        function calcularTotales(ventas, retiros) {
+            const totalVentasPagadas = ventas
+                .filter(v => v.estado === 'Pagado')
+                .reduce((sum, v) => sum + v.valor, 0);
+
+            const totalRetiros = retiros.reduce((sum, r) => sum + r.cantidad, 0);
+
+            const totalCaja = totalVentasPagadas;
+            const totalVentasNetas = totalCaja - totalRetiros;
+
+            return { totalCaja, totalRetiros, totalVentasNetas };
+        }
+
+        function renderRegistroVentas(ventas, retiros) {
+            const container = document.getElementById('registroVentasContainer');
+            
+            const movimientos = [
+                ...ventas.map(v => ({
+                    tipo: 'Venta', 
+                    descripcion: v.descripcion || `${v.producto} (${v.estado})`, 
+                    valor: v.valor,
+                    fecha: new Date(v.fecha),
+                    estado: v.estado
+                })),
+                ...retiros.map(r => ({
+                    tipo: 'Retiro', 
+                    descripcion: r.descripcion, 
+                    valor: r.cantidad,
+                    fecha: new Date(r.fecha),
+                    estado: 'Retiro'
+                }))
+            ].sort((a, b) => b.fecha - a.fecha);
+
+            if (movimientos.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No hay movimientos registrados.</p>';
+                return;
+            }
+
+            let html = `<table id="tablaMovimientos" style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead style="background-color: #34495e;"><tr><th style="padding: 10px; text-align: left;">Tipo</th><th style="padding: 10px; text-align: left;">Descripción</th><th style="padding: 10px; text-align: right;">Valor ($)</th><th style="padding: 10px; text-align: center;">Estado</th><th style="padding: 10px; text-align: center;">Fecha</th></tr></thead><tbody>`;
+
+            movimientos.forEach(m => {
+                const valorDisplay = m.tipo === 'Retiro' ? `-$${m.valor.toFixed(2)}` : `$${m.valor.toFixed(2)}`;
+                const color = m.tipo === 'Retiro' ? '#e74c3c' : m.estado === 'Pagado' ? '#2ecc71' : '#f1c40f';
+                const estadoDisplay = m.tipo === 'Retiro' ? 'COMPLETADO' : m.estado;
+                
+                html += `<tr style="border-bottom: 1px solid #34495e;"><td style="padding: 10px;">${m.tipo}</td><td style="padding: 10px;">${m.descripcion}</td><td style="padding: 10px; text-align: right; color: ${color}; font-weight: bold;">${valorDisplay}</td><td style="padding: 10px; text-align: center;">${estadoDisplay}</td><td style="padding: 10px; text-align: center;">${m.fecha.toLocaleDateString()} ${m.fecha.toLocaleTimeString()}</td></tr>`;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+        
+        // Las funciones agregarVenta y agregarRetiroCaja son las mismas que antes...
         async function agregarVenta() {
             const integrante = document.getElementById('integranteSelect').value;
             const productoSelect = document.getElementById('productoInput');
@@ -344,8 +522,6 @@
             }
         }
         
-        // --- Lógica del Retiro (Utiliza el endpoint POST /api/retiros) ---
-
         async function agregarRetiroCaja() {
             const cantidad = parseFloat(document.getElementById('retiroCantidadInput').value);
             const descripcion = document.getElementById('retiroDescripcionInput').value;
@@ -366,83 +542,91 @@
                 actualizarUI(); 
             }
         }
-
-        // --- Lógica de Visualización y Totales (Utiliza GET) ---
         
-        function calcularTotales(ventas, retiros) {
-            const totalVentasPagadas = ventas
-                .filter(v => v.estado === 'Pagado')
-                .reduce((sum, v) => sum + v.valor, 0);
+        async function exportarCSV() {
+            const ventas = await fetchAPI('/api/ventas', 'GET');
+            const retiros = await fetchAPI('/api/retiros', 'GET');
 
-            const totalRetiros = retiros.reduce((sum, r) => sum + r.cantidad, 0);
-
-            const totalCaja = totalVentasPagadas;
-            const totalVentasNetas = totalCaja - totalRetiros;
-
-            return { totalCaja, totalRetiros, totalVentasNetas };
-        }
-
-        function renderRegistroVentas(ventas, retiros) {
-            const container = document.getElementById('registroVentasContainer');
-            
-            const movimientos = [
-                ...ventas.map(v => ({
-                    tipo: 'Venta', 
-                    descripcion: v.descripcion || `${v.producto} (${v.estado})`, 
-                    valor: v.valor,
-                    fecha: new Date(v.fecha),
-                    estado: v.estado
-                })),
-                ...retiros.map(r => ({
-                    tipo: 'Retiro', 
-                    descripcion: r.descripcion, 
-                    valor: r.cantidad,
-                    fecha: new Date(r.fecha),
-                    estado: 'Retiro'
-                }))
-            ].sort((a, b) => b.fecha - a.fecha);
-
-            if (movimientos.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No hay movimientos registrados.</p>';
+            if (!Array.isArray(ventas) || !Array.isArray(retiros)) {
+                mostrarMensaje("No se pudo obtener la data para exportar.", 'error');
                 return;
             }
 
-            let html = `<table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead style="background-color: #34495e;"><tr><th style="padding: 10px; text-align: left;">Tipo</th><th style="padding: 10px; text-align: left;">Descripción</th><th style="padding: 10px; text-align: right;">Valor ($)</th><th style="padding: 10px; text-align: center;">Estado</th><th style="padding: 10px; text-align: center;">Fecha</th></tr></thead><tbody>`;
+            // Encabezados del CSV
+            let csvContent = "Tipo,Fecha,Valor,Estado,Nombre/Integrante,Descripcion,Producto\n";
 
-            movimientos.forEach(m => {
-                const valorDisplay = m.tipo === 'Retiro' ? `-$${m.valor.toFixed(2)}` : `$${m.valor.toFixed(2)}`;
-                const color = m.tipo === 'Retiro' ? '#e74c3c' : m.estado === 'Pagado' ? '#2ecc71' : '#f1c40f';
-                const estadoDisplay = m.tipo === 'Retiro' ? 'COMPLETADO' : m.estado;
-                
-                html += `<tr style="border-bottom: 1px solid #34495e;"><td style="padding: 10px;">${m.tipo}</td><td style="padding: 10px;">${m.descripcion}</td><td style="padding: 10px; text-align: right; color: ${color}; font-weight: bold;">${valorDisplay}</td><td style="padding: 10px; text-align: center;">${estadoDisplay}</td><td style="padding: 10px; text-align: center;">${m.fecha.toLocaleDateString()} ${m.fecha.toLocaleTimeString()}</td></tr>`;
+            // Procesar Ventas
+            ventas.forEach(v => {
+                const row = [
+                    "Venta",
+                    new Date(v.fecha).toLocaleString(),
+                    v.valor.toFixed(2),
+                    v.estado,
+                    v.nombre,
+                    `"${(v.descripcion || '').replace(/"/g, '""')}"`, // Escapar comillas
+                    v.producto || ''
+                ].join(",");
+                csvContent += row + "\n";
             });
 
-            html += `</tbody></table>`;
-            container.innerHTML = html;
+            // Procesar Retiros
+            retiros.forEach(r => {
+                const row = [
+                    "Retiro",
+                    new Date(r.fecha).toLocaleString(),
+                    (-r.cantidad).toFixed(2), // Negativo para los retiros
+                    "Completado",
+                    "", // Sin nombre de integrante
+                    `"${r.descripcion.replace(/"/g, '""')}"`, // Escapar comillas
+                    ""
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            // Crear y descargar el Blob CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `reporte_ventas_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            mostrarMensaje("Reporte CSV generado y descargado con éxito.", 'success');
         }
 
+        function imprimirRegistro() {
+            const printWindow = window.open('', '', 'height=600,width=800');
+            
+            const tableHTML = document.getElementById('registroVentasContainer').innerHTML;
+            const totalesHTML = document.querySelector('.flex-container').innerHTML;
 
-        async function actualizarUI() {
-             // Llama a la API para obtener las ventas y retiros
-             const ventas = await fetchAPI('/api/ventas', 'GET');
-             const retiros = await fetchAPI('/api/retiros', 'GET'); 
-
-             // Si la API no respondió correctamente (devuelve array vacío por defecto si falla)
-             if (!Array.isArray(ventas) || !Array.isArray(retiros)) { 
-                 console.log("No se pudieron obtener datos del backend. Verifique la URL y el estado del Web Service.");
-                 return; 
-             }
-
-             const { totalCaja, totalRetiros, totalVentasNetas } = calcularTotales(ventas, retiros);
-
-             document.getElementById('totalCaja').textContent = `$${totalCaja.toFixed(2)}`;
-             document.getElementById('totalRetiros').textContent = `$${totalRetiros.toFixed(2)}`;
-             document.getElementById('totalVentasNetas').textContent = `$${totalVentasNetas.toFixed(2)}`;
-             
-             renderRegistroVentas(ventas, retiros);
+            printWindow.document.write('<html><head><title>Historial de Ventas</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('body { font-family: Arial, sans-serif; color: #333; margin: 30px; }');
+            printWindow.document.write('h1 { text-align: center; margin-bottom: 20px; }');
+            printWindow.document.write('.totales-print { display: flex; justify-content: space-around; margin-bottom: 30px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }');
+            printWindow.document.write('.total-box { flex-basis: 30%; text-align: center; padding: 10px; }');
+            printWindow.document.write('.total-label { font-size: 0.9em; color: #666; }');
+            printWindow.document.write('.total-valor { font-size: 1.5em; font-weight: bold; }');
+            printWindow.document.write('table { width: 100%; border-collapse: collapse; margin-top: 20px; }');
+            printWindow.document.write('th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }');
+            printWindow.document.write('th { background-color: #f2f2f2; }');
+            printWindow.document.write('.caja-valor { color: green; } .retiros-valor { color: red; }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h1>Reporte de Movimientos de Caja - ' + new Date().toLocaleDateString() + '</h1>');
+            printWindow.document.write('<div class="totales-print">' + totalesHTML + '</div>');
+            printWindow.document.write(tableHTML);
+            printWindow.document.write('</body></html>');
+            
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
         }
-        
-        // --- Otras funciones de UI ---
         
         function renderIntegrantes() {
             const select = document.getElementById('integranteSelect');
@@ -472,15 +656,10 @@
              });
         }
         
-        // Las funciones agregarIntegrante, exportarCSV y la lógica del modal de contraseña necesitan el backend completo
         function agregarIntegrante() {
             mostrarMensaje("Función de Integrante: Necesita un endpoint POST /api/integrantes en el Backend.", 'info');
         }
 
-        function exportarCSV() {
-            mostrarMensaje("Función Exportar CSV: Necesita un endpoint GET /api/exportar en el Backend.", 'info');
-        }
-        
         // --- EVENTOS DE INICIALIZACIÓN ---
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -509,12 +688,6 @@
                 }
             });
             tipoValorSelect.dispatchEvent(new Event('change')); // Ejecutar al inicio
-
-            // Borrar datos (placeholder)
-            document.getElementById('borrarDatosBtn').addEventListener('click', () => {
-                // Aquí se abriría el modal y luego se llamaría a DELETE /api/datos-completos
-                mostrarMensaje("Borrado de Datos: Necesita un endpoint DELETE en el Backend para borrar datos de MongoDB.", 'info');
-            });
 
 
             // Inicialización final
