@@ -222,7 +222,12 @@
             opacity: 0.9;
         }
         /* Estilos para el registro */
+        #registroVentasContainer {
+            overflow-x: auto; /* CRÍTICO: Permite el scroll horizontal */
+            padding-bottom: 10px; /* Para que la barra de scroll se vea bien */
+        }
         #registroVentasContainer table {
+            min-width: 700px; /* Asegura que la tabla tenga suficiente ancho para scrollear en móvil */
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
@@ -336,71 +341,63 @@
             .group-management-grid > div:first-child button {
                 margin-bottom: 15px;
             }
+            
+            /* En móvil, queremos que la tabla sea la única que desborde */
+            .container {
+                padding: 15px;
+            }
         }
         
         /* ================================================= */
-        /* === ESTILOS RESPONSIVOS PARA TABLA DE VENTAS (MEJORA) === */
+        /* === ESTILOS RESPONSIVOS PARA TABLA DE VENTAS (MODO SCROLL) === */
         /* ================================================= */
-
+        /* Desactivamos el modo "tarjeta" en móvil para usar el scroll horizontal.
+           Mantenemos la tabla con sus estilos normales pero aseguramos el scroll.
+        */
         @media screen and (max-width: 600px) {
-            
-            /* Ocultar encabezados de la tabla */
+            /* Deshacer estilos de tarjeta anteriores */
             #registroVentasContainer table thead {
-                display: none;
+                display: table-header-group; /* Muestra encabezados */
             }
 
-            /* Mostrar filas como bloques */
             #registroVentasContainer table, 
             #registroVentasContainer tbody, 
             #registroVentasContainer tr, 
             #registroVentasContainer td {
-                display: block;
-                width: 100%;
+                display: table-row-group; /* Mantiene la estructura de tabla */
+                width: auto;
+                border: none;
+                margin: 0;
+                padding: 0;
             }
 
-            /* Estilo de la fila para parecer una tarjeta */
             #registroVentasContainer tr {
-                margin-bottom: 10px;
-                border: 1px solid #2ecc71; /* Borde de tarjeta */
-                border-radius: 8px;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-                padding: 10px 0; /* Padding vertical para el contenido */
-            }
-            
-            /* Estilo para las celdas (datos) */
-            #registroVentasContainer td {
-                /* Esto asegura que la celda mantenga su padding y el borde inferior */
-                border-bottom: 1px solid #44607a; 
-                padding: 8px 15px;
-                text-align: right;
-                position: relative;
+                border: none;
+                box-shadow: none;
+                padding: 0;
             }
 
-            /* Insertar etiqueta antes del contenido de la celda usando attr() y pseudo-elemento */
+            #registroVentasContainer td {
+                display: table-cell; /* Vuelve a modo celda */
+                text-align: left;
+                padding: 10px;
+                border-bottom: 1px solid #2c3e50;
+                position: static;
+            }
+
+            /* Eliminar etiquetas pseudo-elemento */
             #registroVentasContainer td::before {
-                content: attr(data-label);
-                float: left;
-                font-weight: bold;
-                color: #bdc3c7;
-                margin-right: 10px;
+                content: none;
             }
-            
-            /*
-            * MEJORA CRÍTICA: MANTENER FECHA VISIBLE (Columna 5)
-            * -----------------------------------------------------------
-            * La fecha/hora siempre es la columna 5 de la tabla.
-            */
-            #tablaMovimientos td:nth-of-type(5) {
-                font-size: 0.8em; /* Tamaño de fuente más pequeño para ahorrar espacio */
-                color: #7f8c8d; /* Color tenue para que no compita con el valor */
-                text-align: center; /* Centrar la fecha */
-                border-bottom: none; /* Última celda de la "tarjeta" no necesita borde */
+
+            /* Asegurar el estilo del valor y la fecha */
+            #tablaMovimientos td:nth-of-type(3) {
+                text-align: right !important;
+                font-size: 0.9em; /* Vuelve al tamaño normal */
             }
-            
-            /* Ajuste para que el valor se vea bien */
-            #registroVentasContainer td:nth-of-type(3) {
-                text-align: right !important; /* Asegura alineación a la derecha para el valor */
-                font-size: 1.1em;
+             #tablaMovimientos td:nth-of-type(5) {
+                text-align: left; /* Alineación normal en el scroll */
+                font-size: 0.9em;
             }
         }
     </style>
@@ -458,7 +455,8 @@
         
         <button id="mostrarRegistroVentasBtn" style="width: 100%; margin-bottom: 15px; background-color: #3498db;">Mostrar/Ocultar Registro de Movimientos</button>
         
-        <div id="registroVentasContainer" style="display: none;">
+        <!-- CONTENEDOR DE SCROLL HORIZONTAL (CRÍTICO PARA MÓVIL) -->
+        <div id="registroVentasContainer" style="display: none; overflow-x: auto;">
             <!-- Contenido del registro de ventas -->
         </div>
 
@@ -584,20 +582,18 @@
     </div>
     
     <script>
-        // CRÍTICO: ¡DEBES PEGAR AQUÍ LA URL REAL DE TU WEB SERVICE DE RENDER!
+        // CRÍTICO: ¡URL REAL DE TU WEB SERVICE DE RENDER INSERTADA!
         const API_BASE_URL = 'https://ventas-mmm.onrender.com'; 
 
         // --- Datos de Configuración Local ---
 
         // =========================================================================
-        // === AQUÍ PUEDES CAMBIAR LOS NOMBRES y PRECIOS DE TUS PRODUCTOS (VALOR) ===
+        // === LISTA DE PRODUCTOS ACTUALIZADA SEGÚN TU SOLICITUD ===
         // =========================================================================
         const ventasPorDefecto = [
-            { nombre: 'Actividad', valor: 3000 }, 
-            { nombre: 'Almuerzo', valor: 10000 },
-            { nombre: 'Producto C', valor: 15000 },
-            // Puedes añadir más productos aquí:
-            // { nombre: 'Producto D', valor: 15.75 }, 
+            { nombre: 'Actividad', valor: 3000.00 }, 
+            { nombre: 'Almuerzo sencillo', valor: 10000.00 },
+            { nombre: 'Producto C', valor: 15000.00 },
         ];
         // =========================================================================
 
@@ -941,21 +937,20 @@
                 return;
             }
 
-            // Agregando data-label a los encabezados
-            let html = `<table id="tablaMovimientos" style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead style="background-color: #34495e;"><tr><th data-label="Tipo" style="padding: 10px; text-align: left;">Tipo</th><th data-label="Descripción" style="padding: 10px; text-align: left;">Descripción</th><th data-label="Valor" style="padding: 10px; text-align: right;">Valor ($)</th><th data-label="Estado" style="padding: 10px; text-align: center;">Estado</th><th data-label="Fecha" style="padding: 10px; text-align: center;">Fecha</th></tr></thead><tbody>`;
+            // El min-width de la tabla se define en CSS para forzar el scroll
+            let html = `<table id="tablaMovimientos" style="border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead><tr><th style="width: 15%; padding: 10px; text-align: left;">Tipo</th><th style="width: 35%; padding: 10px; text-align: left;">Descripción</th><th style="width: 15%; padding: 10px; text-align: right;">Valor ($)</th><th style="width: 15%; padding: 10px; text-align: center;">Estado</th><th style="width: 20%; padding: 10px; text-align: center;">Fecha</th></tr></thead><tbody>`;
 
             movimientos.forEach(m => {
                 const valorDisplay = m.tipo === 'Retiro' ? `-$${m.valor.toFixed(2)}` : `$${m.valor.toFixed(2)}`;
                 const color = m.tipo === 'Retiro' ? '#e74c3c' : m.estado === 'Pagado' ? '#2ecc71' : '#f1c40f';
                 const estadoDisplay = m.tipo === 'Retiro' ? 'COMPLETADO' : m.estado;
                 
-                // CRÍTICO: Añadir el atributo data-label a cada <td> para el responsive
                 html += `<tr style="border-bottom: 1px solid #34495e;">
-                            <td data-label="Tipo" style="padding: 10px;">${m.tipo}</td>
-                            <td data-label="Descripción" style="padding: 10px;">${m.descripcion}</td>
-                            <td data-label="Valor" style="padding: 10px; text-align: right; color: ${color}; font-weight: bold;">${valorDisplay}</td>
-                            <td data-label="Estado" style="padding: 10px; text-align: center;">${estadoDisplay}</td>
-                            <td data-label="Fecha" style="padding: 10px; text-align: center;">${m.fecha.toLocaleDateString()} ${m.fecha.toLocaleTimeString()}</td>
+                            <td style="padding: 10px;">${m.tipo}</td>
+                            <td style="padding: 10px;">${m.descripcion}</td>
+                            <td style="padding: 10px; text-align: right; color: ${color}; font-weight: bold;">${valorDisplay}</td>
+                            <td style="padding: 10px; text-align: center;">${estadoDisplay}</td>
+                            <td style="padding: 10px; text-align: center;">${m.fecha.toLocaleDateString()} ${m.fecha.toLocaleTimeString()}</td>
                         </tr>`;
             });
 
@@ -1057,6 +1052,7 @@
              ventasPorDefecto.forEach(p => {
                  const option = document.createElement('option');
                  option.value = p.nombre;
+                 // Mostrar el valor en la lista de selección
                  option.textContent = `${p.nombre} ($${p.valor.toFixed(2)})`;
                  productoInput.appendChild(option);
              });
