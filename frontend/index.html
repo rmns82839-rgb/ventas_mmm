@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Ventas y Grupos</title>
-    <!-- Incluye aquí tus estilos CSS -->
     <style>
         /* Estilos base */
         body {
@@ -227,7 +226,8 @@
             padding-bottom: 10px; /* Para que la barra de scroll se vea bien */
         }
         #registroVentasContainer table {
-            min-width: 700px; /* Asegura que la tabla tenga suficiente ancho para scrollear en móvil */
+            /* AJUSTE CLAVE: Aumentar el ancho mínimo para dar espacio al botón */
+            min-width: 950px; 
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
@@ -245,6 +245,22 @@
         #registroVentasContainer tr:hover {
             background-color: #44607a;
         }
+        /* Estilos para el botón de eliminar dentro de la tabla */
+        .delete-btn-table {
+            background-color: #e74c3c; /* ROJO */
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: normal;
+            margin: 0; /* Eliminar el margin-top de button general */
+            display: inline-block;
+            white-space: nowrap; /* Evita que el texto se parta */
+        }
+        .delete-btn-table:hover {
+            background-color: #c0392b;
+        }
+
         /* Estilos para los botones que antes eran blancos y no se veían */
         .admin-button {
             background-color: #e74c3c; /* ROJO para advertencia de borrar */
@@ -403,7 +419,6 @@
     </style>
 </head>
 <body>
-    <!-- Burbujas Flotantes (REINSERTADAS) -->
     <ul class="bubbles">
         <li></li>
         <li></li>
@@ -416,8 +431,6 @@
         <li></li>
         <li></li>
     </ul>
-    <!-- Fin Burbujas -->
-
     <div class="container">
         <h1>Control de Ventas</h1>
 
@@ -436,7 +449,6 @@
             </div>
         </div>
 
-        <!-- Sección de Filtros (Omitidos, no funcionales aún) -->
         <div class="flex-container" style="gap: 10px;">
             <div class="form-group">
                 <label for="filtroNombreInput">Filtrar por Vendedor</label>
@@ -455,23 +467,15 @@
         
         <button id="mostrarRegistroVentasBtn" style="width: 100%; margin-bottom: 15px; background-color: #3498db;">Mostrar/Ocultar Registro de Movimientos</button>
         
-        <!-- CONTENEDOR DE SCROLL HORIZONTAL (CRÍTICO PARA MÓVIL) -->
         <div id="registroVentasContainer" style="display: none; overflow-x: auto;">
-            <!-- Contenido del registro de ventas -->
-        </div>
+            </div>
 
-        <!-- Secciones de Acción y Botones -->
-        <!-- Mantenemos el botón "Borrar Todo" compacto -->
         <div class="flex-container three-cols" style="grid-template-columns: 1fr 1fr 1fr;">
-            <!-- Botón Exportar -->
             <button id="exportarCsvBtn" onclick="exportarCSV()" class="export-button">Exportar CSV</button> 
-            <!-- Botón de Imprimir -->
             <button id="imprimirBtn" onclick="imprimirRegistro()" class="print-button">Imprimir Historial</button>
-            <!-- Botón Borrar/Administrar: Llama a abrirModalBorrado() -->
             <button id="borrarDatosBtn" onclick="abrirModalBorrado()" class="admin-button">Borrar Todo</button>
         </div>
         
-        <!-- Sección de Retiro de Caja -->
         <div class="form-group">
             <label for="retiroCantidadInput">Retiro de Caja (Cantidad)</label>
             <div class="flex-container" style="margin-bottom: 0;">
@@ -481,19 +485,15 @@
             </div>
         </div>
 
-        <!-- Sección de Gestión de Grupos e Integrantes - AHORA MÁS RESPONSIVA -->
         <div class="integrantes-list">
             <label style="margin-bottom: 15px; color: #f1c40f;">Gestión de Grupos y Vendedores</label>
             
-            <!-- CONTENEDOR GRID RESPONSIVO -->
             <div class="group-management-grid">
-                <!-- Crear Nuevo Grupo -->
                 <div class="group-form-container">
                     <input type="text" id="grupoNombreInput" placeholder="Nombre del nuevo Grupo (Ej: Turno Mañana)">
                     <button onclick="agregarGrupo()" style="background-color: #2980b9;">Crear Grupo</button>
                 </div>
 
-                <!-- Añadir Integrante a Grupo -->
                 <div class="group-form-container">
                     <input type="text" id="integranteNombreInput" placeholder="Nombre del Vendedor">
                     <select id="grupoSelectIntegrantes">
@@ -502,25 +502,19 @@
                     <button onclick="agregarIntegrante()" style="background-color: #5c6874;">Añadir Vendedor</button>
                 </div>
             </div>
-            <!-- FIN CONTENEDOR GRID RESPONSIVO -->
-
             <div id="integrantesContainer" style="margin-top: 10px; font-size: 0.9em;">
-                <!-- Lista de Grupos y Vendedores se renderizan aquí -->
                 <p style="color: #bdc3c7;">Cargando grupos y vendedores...</p>
             </div>
         </div>
 
 
-        <!-- Formulario de Venta -->
         <h2 style="color: #bdc3c7; text-align: center; margin-top: 25px;">Registrar Nueva Venta</h2>
         <div class="flex-container">
              <div class="form-group">
                 <label for="integranteSelect">Vendedor (Integrante)</label>
                 <select id="integranteSelect">
-                    <!-- Opciones de vendedores se llenan con JS -->
-                </select>
+                    </select>
             </div>
-            <!-- Campo NUEVO: Nombre del Cliente/Comprador -->
             <div class="form-group">
                 <label for="clienteInput">Cliente/Comprador (opcional)</label>
                 <input type="text" id="clienteInput" placeholder="Nombre del cliente">
@@ -528,8 +522,7 @@
             <div class="form-group">
                 <label for="productoInput">Producto</label>
                 <select id="productoInput">
-                    <!-- Opciones de productos se llenan con JS -->
-                </select>
+                    </select>
             </div>
             <div class="form-group">
                 <label for="tipoValorSelect">Tipo de Registro</label>
@@ -568,7 +561,6 @@
 
     </div>
 
-    <!-- Modal para Confirmar Contraseña (Borrar Datos) -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="document.getElementById('passwordModal').style.display='none'">&times;</span>
@@ -576,7 +568,6 @@
             <p>Esta acción es **irreversible** y eliminará **TODAS** las Ventas y Retiros de la base de datos.</p>
             <label for="passwordInput">Introduce la clave de seguridad:</label>
             <input type="password" id="passwordInput" placeholder="Clave de seguridad">
-            <!-- El botón llama a la función de borrado -->
             <button id="confirmDeleteBtn" onclick="borrarTodosLosDatos()">Confirmar Borrado</button>
         </div>
     </div>
@@ -619,7 +610,7 @@
                 const response = await fetch(url, options);
                 
                 if (response.ok) {
-                    // Maneja respuestas vacías (como 204 No Content)
+                    // Maneja respuestas vacías (como 204 No Content o DELETE exitoso)
                     if (response.status === 204 || method === 'DELETE') return true; 
                     return response.json(); 
                 } else {
@@ -898,6 +889,29 @@
             }
         }
         
+        // === LÓGICA DE ELIMINACIÓN (FUNCIÓN AGREGADA) ===
+        async function eliminarVenta(ventaId) {
+            if (!confirm('ADVERTENCIA: ¿Estás seguro de que deseas ELIMINAR permanentemente esta venta?')) {
+                return;
+            }
+
+            try {
+                // Endpoint para eliminar una venta específica. Se asume que en el server.js existe: DELETE /api/ventas/:id
+                const resultado = await fetchAPI(`/api/ventas/${ventaId}`, 'DELETE');
+
+                if (resultado === true) {
+                    mostrarMensaje('Venta eliminada con éxito.', 'success');
+                    await actualizarUI(); 
+                } else {
+                    mostrarMensaje('❌ Error al intentar eliminar la venta.', 'error');
+                }
+            } catch (error) {
+                console.error('Error de conexión:', error);
+                mostrarMensaje('Error de conexión con el servidor al intentar eliminar la venta.', 'error');
+            }
+        }
+        // =========================================================
+
         function calcularTotales(ventas, retiros) {
             const totalVentasPagadas = ventas
                 .filter(v => v.estado === 'Pagado')
@@ -916,6 +930,7 @@
             
             const movimientos = [
                 ...ventas.map(v => ({
+                    id: v._id, // AGREGAR EL ID DE LA VENTA
                     tipo: 'Venta', 
                     // Descripción mejorada
                     descripcion: `Vendedor: ${v.nombre} | Cliente: ${v.cliente || 'Anónimo'} | ${v.descripcion || v.producto}`, 
@@ -924,6 +939,7 @@
                     estado: v.estado
                 })),
                 ...retiros.map(r => ({
+                    id: null, // Los retiros no tienen botón de acción
                     tipo: 'Retiro', 
                     descripcion: r.descripcion, 
                     valor: r.cantidad,
@@ -937,13 +953,25 @@
                 return;
             }
 
-            // El min-width de la tabla se define en CSS para forzar el scroll
-            let html = `<table id="tablaMovimientos" style="border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead><tr><th style="width: 15%; padding: 10px; text-align: left;">Tipo</th><th style="width: 35%; padding: 10px; text-align: left;">Descripción</th><th style="width: 15%; padding: 10px; text-align: right;">Valor ($)</th><th style="width: 15%; padding: 10px; text-align: center;">Estado</th><th style="width: 20%; padding: 10px; text-align: center;">Fecha</th></tr></thead><tbody>`;
+            // AJUSTE CLAVE EN LOS ANCHOS DE COLUMNAS (THEAD)
+            let html = `<table id="tablaMovimientos" style="border-collapse: collapse; margin-top: 20px; font-size: 0.9em;"><thead><tr>
+                        <th style="width: 10%; padding: 10px; text-align: left;">Tipo</th>
+                        <th style="width: 38%; padding: 10px; text-align: left;">Descripción</th>
+                        <th style="width: 12%; padding: 10px; text-align: right;">Valor ($)</th>
+                        <th style="width: 10%; padding: 10px; text-align: center;">Estado</th>
+                        <th style="width: 20%; padding: 10px; text-align: center;">Fecha</th>
+                        <th style="width: 10%; padding: 10px; text-align: center;">Acciones</th>
+                        </tr></thead><tbody>`;
 
             movimientos.forEach(m => {
                 const valorDisplay = m.tipo === 'Retiro' ? `-$${m.valor.toFixed(2)}` : `$${m.valor.toFixed(2)}`;
                 const color = m.tipo === 'Retiro' ? '#e74c3c' : m.estado === 'Pagado' ? '#2ecc71' : '#f1c40f';
                 const estadoDisplay = m.tipo === 'Retiro' ? 'COMPLETADO' : m.estado;
+                
+                // BOTÓN DE ELIMINAR con la nueva clase CSS
+                const accionButton = m.tipo === 'Venta' 
+                    ? `<button onclick="eliminarVenta('${m.id}')" class="delete-btn-table">Eliminar</button>` 
+                    : 'N/A';
                 
                 html += `<tr style="border-bottom: 1px solid #34495e;">
                             <td style="padding: 10px;">${m.tipo}</td>
@@ -951,6 +979,7 @@
                             <td style="padding: 10px; text-align: right; color: ${color}; font-weight: bold;">${valorDisplay}</td>
                             <td style="padding: 10px; text-align: center;">${estadoDisplay}</td>
                             <td style="padding: 10px; text-align: center;">${m.fecha.toLocaleDateString()} ${m.fecha.toLocaleTimeString()}</td>
+                            <td style="padding: 10px; text-align: center;">${accionButton}</td>
                         </tr>`;
             });
 
