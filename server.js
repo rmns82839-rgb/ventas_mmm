@@ -1,128 +1,88 @@
-// server.js
-
-// 1. Cargar variables de entorno desde el archivo .env
-require('dotenv').config();
-
 const express = require('express');
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const cors = require('cors');
+
+// Cargar variables de entorno (solo para desarrollo local, Render usa las variables)
+dotenv.config();
+
 const app = express();
 
-// Define el puerto y la URI de conexión
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI;
-
-// --- Middlewares ---
+// --- CONFIGURACIÓN PRINCIPAL ---
+app.use(cors());
 app.use(express.json());
-app.use(cors()); 
 
-// 2. Conexión a MongoDB
-if (!MONGO_URI) {
-    console.error('❌ Error: La variable de entorno MONGO_URI no está definida.');
-} else {
-    mongoose.connect(MONGO_URI)
-        .then(() => console.log('✅ Conexión a MongoDB Atlas establecida con éxito.'))
-        .catch(err => {
-            console.error('❌ Error de conexión a MongoDB. Verifica MONGO_URI y la configuración de Atlas.', err);
-        });
-}
+// --- CONEXIÓN A MONGODB ---
+// Utiliza la variable de entorno MONGO_URI configurada en Render
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅ Conectado a MongoDB Atlas'))
+    .catch(err => {
+        console.error('❌ Error al conectar a MongoDB:', err.message);
+        process.exit(1);
+    });
 
-// --- 3. Definición del Esquema (Modelo de Transacción UNIFICADO) ---
-const TransaccionSchema = new mongoose.Schema({
-    // Tipo: Define si es VENTA o RETIRO
-    tipo: { 
-        type: String, 
-        enum: ['VENTA', 'RETIRO'], 
-        required: true 
-    },
-    // Descripción/Concepto (Usado para ambos tipos)
-    descripcion: { 
-        type: String, 
-        required: true, 
-        trim: true 
-    },
-    // Valor (Positivo para VENTA, Negativo para RETIRO)
-    valor: { 
-        type: Number, 
-        required: true, 
-        min: 0 // Se valida que el valor ingresado sea positivo; el signo se maneja con 'tipo'
-    },
-    // --- Campos Específicos de VENTA ---
-    estado: { 
-        type: String, 
-        enum: ['Pagado', 'Fiado'], 
-        default: 'Pagado' // Ahora Pagado por defecto
-    },
-    cliente: { 
-        type: String, 
-        default: 'Anónimo' 
-    },
-    // --- Nuevos Campos Solicitados ---
-    grupo: {
-        type: String,
-        default: 'General'
-    },
-    integrantes: {
-        type: String,
-        default: 'N/A'
-    }
-}, { 
-    timestamps: true 
-});
+// --- MODELOS DE DATOS ---
+const Venta = require('./models/Venta'); 
+const Retiro = require('./models/Retiro'); 
 
-const Transaccion = mongoose.model('Transaccion', TransaccionSchema);
+// --- RUTAS DE API ---
 
-// --- 4. Rutas de API (CRUD - Mapeadas a /api/transacciones) ---
-
-// CREATE: Crear una nueva transacción (Venta o Retiro)
-app.post('/api/transacciones', async (req, res) => {
+// 1. GUARDAR VENTA (CREATE)
+app.post('/api/ventas', async (req, res) => {
     try {
-        const nuevaTransaccion = new Transaccion(req.body);
-        await nuevaTransaccion.save();
-        res.status(201).json(nuevaTransaccion);
+        const nuevaVenta = new Venta(req.body);
+        await nuevaVenta.save();
+        res.status(201).json({ message: 'Venta registrada con éxito', data: nuevaVenta });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ message: 'Error de validación al registrar la venta', error: error.message });
     }
 });
 
-// READ ALL: Obtener todas las transacciones
-app.get('/api/transacciones', async (req, res) => {
+// 2. OBTENER TODAS LAS VENTAS (READ)
+app.get('/api/ventas', async (req, res) => {
     try {
-        const transacciones = await Transaccion.find().sort({ createdAt: -1 }); 
-        res.json(transacciones);
+        const ventas = await Venta.find().sort({ fecha: -1 });
+        res.status(200).json(ventas);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: 'Error al obtener las ventas de la base de datos', error: error.message });
     }
 });
 
-// UPDATE: Actualizar una transacción por ID (Usado para cambiar estado/abonar)
-app.put('/api/transacciones/:id', async (req, res) => {
+// 3. GUARDAR RETIRO (CREATE)
+app.post('/api/retiros', async (req, res) => {
     try {
-        const transaccionActualizada = await Transaccion.findByIdAndUpdate(
-            req.params.id, 
-            req.body, 
-            { new: true, runValidators: true }
-        );
+        const { cantidad, descripcion } = req.body;
 
-        if (!transaccionActualizada) return res.status(404).json({ message: 'Transacción no encontrada' });
-        res.json(transaccionActualizada);
+        if (!cantidad || !descripcion) {
+            return res.status(400).json({ message: 'Faltan campos: cantidad y descripción son obligatorios.' });
+        }
+        
+        const nuevoRetiro = new Retiro({ cantidad, descripcion });
+        await nuevoRetiro.save();
+        
+        res.status(201).json({ message: 'Retiro registrado con éxito', data: nuevoRetiro });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ message: 'Error al registrar el retiro', error: error.message });
     }
 });
 
-// DELETE: Eliminar una transacción por ID
-app.delete('/api/transacciones/:id', async (req, res) => {
+// 4. OBTENER TODOS LOS RETIROS (READ)
+app.get('/api/retiros', async (req, res) => {
     try {
-        const transaccionEliminada = await Transaccion.findByIdAndDelete(req.params.id);
-        if (!transaccionEliminada) return res.status(404).json({ message: 'Transacción no encontrada' });
-        res.json({ message: 'Transacción eliminada con éxito' });
+        const retiros = await Retiro.find().sort({ fecha: -1 });
+        res.status(200).json(retiros);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: 'Error al obtener los retiros de la base de datos', error: error.message });
     }
 });
 
-// 5. Inicia el servidor
+// 5. RUTA DE PRUEBA
+app.get('/', (req, res) => {
+    res.status(200).send('Servidor de Ventas CRUD está operativo.');
+});
+
+// --- INICIO DEL SERVIDOR ---
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`El servidor está corriendo en el puerto ${PORT}`);
+    console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
 });
